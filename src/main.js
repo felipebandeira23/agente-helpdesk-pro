@@ -121,14 +121,21 @@ if (!gotTheLock) {
       if (fs.existsSync(iconPath)) {
         tray = new Tray(iconPath);
       } else {
-        // Create a dummy tray or handle gracefully without throwing
         const dummyIcon = path.join(__dirname, 'renderer/favicon.ico');
         if (fs.existsSync(dummyIcon)) {
           tray = new Tray(dummyIcon);
         }
       }
     } catch (e) {
-      console.warn("Falha ao inicializar o ícone da bandeja:", e.message);
+      console.warn("Falha ao inicializar o ícone da bandeja com ico, tentando png...", e.message);
+      try {
+        const pngPath = path.join(__dirname, 'assets/icon.png');
+        if (fs.existsSync(pngPath)) {
+          tray = new Tray(pngPath);
+        }
+      } catch (err) {
+        console.warn("Falha ao inicializar o ícone da bandeja:", err.message);
+      }
     }
 
     if (tray) {

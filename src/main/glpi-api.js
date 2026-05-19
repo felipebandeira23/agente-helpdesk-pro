@@ -25,6 +25,35 @@ function getConfigPath() {
   }
 }
 
+function loadPerlAgentConfig() {
+  try {
+    const perlCfgPath = path.join(__dirname, '..', '..', '..', 'glpi-agent', 'etc', 'support-server-plugin.cfg');
+    if (fs.existsSync(perlCfgPath)) {
+      const content = fs.readFileSync(perlCfgPath, 'utf8');
+      const config = {};
+      const lines = content.split(/\r?\n/);
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith(';')) continue;
+        const match = trimmed.match(/^([^=]+)=(.*)$/);
+        if (match) {
+          const key = match[1].trim();
+          const value = match[2].trim();
+          config[key] = value;
+        }
+      }
+      return {
+        glpiUrl: config.glpi_url || null,
+        appToken: config.app_token || null,
+        userToken: config.user_token || null,
+      };
+    }
+  } catch (e) {
+    console.error('[GLPI-API] Erro ao carregar config do agente Perl:', e.message);
+  }
+  return null;
+}
+
 function loadConfig() {
   const defaults = {
     glpiUrl: 'https://chamados.intranet.coppead.ufrj.br',
@@ -35,16 +64,41 @@ function loadConfig() {
     sessionToken: null,
     sessionExpiry: null,
   };
+  
+  let merged = { ...defaults };
+  
+  // 1. Tenta carregar do fallback Perl agente config
+  const perlConfig = loadPerlAgentConfig();
+  if (perlConfig) {
+    if (perlConfig.glpiUrl) merged.glpiUrl = perlConfig.glpiUrl;
+    if (perlConfig.appToken) merged.appToken = perlConfig.appToken;
+    if (perlConfig.userToken) merged.userToken = perlConfig.userToken;
+    console.log('[GLPI-API] Configurações de fallback carregadas do agente Perl:', {
+      glpiUrl: merged.glpiUrl,
+      appToken: merged.appToken ? '***' : null,
+      userToken: merged.userToken ? '***' : null
+    });
+  }
+
+  // 2. Tenta carregar da config local do aplicativo
   try {
     const cfgPath = getConfigPath();
     if (fs.existsSync(cfgPath)) {
       const parsed = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
-      if (!parsed.glpiUrl) parsed.glpiUrl = defaults.glpiUrl;
-      if (!parsed.appToken) parsed.appToken = defaults.appToken;
-      return Object.assign({}, defaults, parsed);
+      if (parsed.glpiUrl) merged.glpiUrl = parsed.glpiUrl;
+      if (parsed.appToken) merged.appToken = parsed.appToken;
+      if (parsed.userToken !== undefined) merged.userToken = parsed.userToken;
+      if (parsed.meshUrl) merged.meshUrl = parsed.meshUrl;
+      if (parsed.meshGroupId !== undefined) merged.meshGroupId = parsed.meshGroupId;
+      if (parsed.sessionToken !== undefined) merged.sessionToken = parsed.sessionToken;
+      if (parsed.sessionExpiry !== undefined) merged.sessionExpiry = parsed.sessionExpiry;
+      console.log('[GLPI-API] Configurações locais carregadas com sucesso de:', cfgPath);
     }
-  } catch (e) {}
-  return defaults;
+  } catch (e) {
+    console.error('[GLPI-API] Erro ao ler glpi-config.json:', e.message);
+  }
+
+  return merged;
 }
 
 function saveConfig(cfg) {
@@ -102,9 +156,20 @@ async function initSession() {
     'Content-Type': 'application/json',
   };
 
-  // Auth por user_token (preferencial, sem expor senha)
+  // Auth por user_token ou Basic Auth
   if (_config.userToken) {
-    headers['Authorization'] = `user_token ${_config.userToken}`;
+    if (_config.userToken.length < 20) {
+      // Se for curto (senha), usa Basic Auth com o usuário logado no SO
+      const username = os.userInfo().username;
+      const credentials = Buffer.from(`${username}:${_config.userToken}`).toString('base64');
+      headers['Authorization'] = `Basic ${credentials}`;
+      console.log(`[GLPI-API] Autenticando com Basic Auth via usuario local: ${username}`);
+    } else {
+      headers['Authorization'] = `user_token ${_config.userToken}`;
+      console.log('[GLPI-API] Autenticando com User-Token direto');
+    }
+  } else {
+    console.log('[GLPI-API] Tentando inicializar sessão sem token de usuário (anônimo ou apenas com App-Token)');
   }
 
   const res = await client.get(`${_config.glpiUrl}/apirest.php/initSession`, { headers });
@@ -117,6 +182,7 @@ async function initSession() {
   _config.sessionExpiry = now + 28 * 60 * 1000; // 28 minutos
   saveConfig(_config);
 
+  console.log('[GLPI-API] Sessão com GLPI inicializada com sucesso. Token:', _config.sessionToken ? '***' : 'null');
   return _config.sessionToken;
 }
 
@@ -252,10 +318,6 @@ async function getMyTickets(userId) {
     sort: 'date_mod',
     order: 'DESC',
   };
-
-  if (userId) {
-    params['searchText[users_id]'] = userId;
-  }
 
   const res = await client.get(`${_config.glpiUrl}/apirest.php/Ticket`, { headers, params });
   return Array.isArray(res.data) ? res.data : [];
