@@ -195,6 +195,7 @@ async function loadTickets() {
     tickets.sort((a, b) => parseInt(b.id) - parseInt(a.id));
     ticketsList = tickets;
     filterTicketsTable();
+    checkForTicketUpdates(tickets).catch(err => console.error('[NOTIFY] Erro ao processar atualizações:', err));
   } catch (e) {
     console.error('Falha ao obter chamados:', e);
   }
@@ -1448,3 +1449,109 @@ async function startUpdateWorkflow() {
     }
   }
 }
+
+// ─── Lógica de Notificações de Novos Comentários nos Chamados ───────────────
+
+let notificationCache = {};
+try {
+  notificationCache = JSON.parse(localStorage.getItem('glpi_notifications_cache') || '{}');
+} catch (e) {
+  notificationCache = {};
+}
+
+let cachedCurrentUserId = null;
+async function getCurrentUserIdForNotifications() {
+  if (cachedCurrentUserId) return cachedCurrentUserId;
+  try {
+    const userInfo = await window.electronAPI.getOSUser();
+    const loggedUser = await window.electronAPI.glpiFindUser(userInfo.username);
+    if (loggedUser) {
+      cachedCurrentUserId = loggedUser.id;
+    }
+  } catch (err) {
+    console.error('[NOTIFY] Erro ao obter ID de usuário para notificações:', err);
+  }
+  return cachedCurrentUserId;
+}
+
+async function checkForTicketUpdates(tickets) {
+  if (!window.electronAPI) return;
+  const myId = await getCurrentUserIdForNotifications();
+  let cacheUpdated = false;
+
+  for (const ticket of tickets) {
+    const ticketId = String(ticket.id);
+    const cached = notificationCache[ticketId];
+
+    // Se o chamado estiver fechado (status 6), removemos do cache para liberar espaço
+    if (parseInt(ticket.status) === 6) {
+      if (cached) {
+        delete notificationCache[ticketId];
+        cacheUpdated = true;
+      }
+      continue;
+    }
+
+    // Se for um chamado novo ou ainda não estiver no cache
+    if (!cached) {
+      notificationCache[ticketId] = {
+        dateMod: ticket.date_mod,
+        lastFollowupId: null,
+        initialized: false
+      };
+      cacheUpdated = true;
+
+      // Busca assincronamente a lista inicial de follow-ups para marcar a linha de base silenciosamente
+      window.electronAPI.glpiGetFollowups(ticket.id).then(followups => {
+        if (followups && followups.length > 0) {
+          followups.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+          notificationCache[ticketId].lastFollowupId = followups[followups.length - 1].id;
+        }
+        notificationCache[ticketId].initialized = true;
+        localStorage.setItem('glpi_notifications_cache', JSON.stringify(notificationCache));
+      }).catch(err => {
+        console.error(`[NOTIFY] Erro ao buscar mensagens iniciais do chamado #${ticketId}:`, err);
+      });
+
+      continue;
+    }
+
+    // Se houve modificação no chamado desde o último carregamento
+    if (cached.dateMod !== ticket.date_mod) {
+      cached.dateMod = ticket.date_mod;
+      cacheUpdated = true;
+      localStorage.setItem('glpi_notifications_cache', JSON.stringify(notificationCache));
+
+      // Busca as interações do chamado
+      try {
+        const followups = await window.electronAPI.glpiGetFollowups(ticket.id);
+        if (followups && followups.length > 0) {
+          followups.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+          const latest = followups[followups.length - 1];
+
+          // Verifica se a última mensagem é nova em relação ao cache
+          if (cached.initialized && cached.lastFollowupId && latest.id > cached.lastFollowupId) {
+            // Garante que não disparamos notificações para respostas do próprio usuário logado
+            if (latest.users_id != myId) {
+              window.electronAPI.showNotification({
+                title: `Atualização no Chamado #${ticketId}`,
+                body: `Assunto: ${ticket.name}\nNova mensagem recebida!`
+              });
+            }
+          }
+
+          cached.lastFollowupId = latest.id;
+        }
+        cached.initialized = true;
+        localStorage.setItem('glpi_notifications_cache', JSON.stringify(notificationCache));
+      } catch (err) {
+        console.error(`[NOTIFY] Erro ao consultar atualizações do chamado #${ticketId}:`, err);
+      }
+    }
+  }
+
+  if (cacheUpdated) {
+    localStorage.setItem('glpi_notifications_cache', JSON.stringify(notificationCache));
+  }
+}
+
