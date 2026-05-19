@@ -1137,6 +1137,9 @@ function updateChartsTheme(isLight) {
 function filterTicketsTable() {
   const searchQuery = document.getElementById('search-tickets-input').value.toLowerCase().trim();
   const statusFilter = document.getElementById('filter-tickets-status').value;
+  const priorityFilter = document.getElementById('filter-tickets-priority') 
+    ? document.getElementById('filter-tickets-priority').value 
+    : 'all';
 
   const filtered = ticketsList.filter(ticket => {
     // 1. Filtragem por busca textual (ID, Assunto ou Categoria)
@@ -1164,7 +1167,22 @@ function filterTicketsTable() {
       }
     }
 
-    return matchesSearch && matchesStatus;
+    // 3. Filtragem por prioridade selecionada
+    let matchesPriority = true;
+    if (priorityFilter !== 'all') {
+      const urgency = parseInt(ticket.urgency) || 3;
+      if (priorityFilter === 'low') {
+        matchesPriority = (urgency === 1 || urgency === 2);
+      } else if (priorityFilter === 'medium') {
+        matchesPriority = (urgency === 3);
+      } else if (priorityFilter === 'high') {
+        matchesPriority = (urgency === 4);
+      } else if (priorityFilter === 'critical') {
+        matchesPriority = (urgency >= 5);
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesPriority;
   });
 
   renderTicketsTable(filtered);

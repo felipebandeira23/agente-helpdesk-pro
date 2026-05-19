@@ -217,7 +217,6 @@
         <div class="card">
           <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 24px;">Painel de Acompanhamento</h2>
           
-          <!-- Barra de Filtros e Pesquisa -->
           <div class="filter-bar" style="display: flex; gap: 16px; margin-bottom: 24px; align-items: center; background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border-glass); padding: 12px; border-radius: 12px; backdrop-filter: blur(8px);">
             <div style="flex: 1; position: relative;">
               <input type="text" id="search-tickets-input" class="form-control" placeholder="Pesquisar por ID, assunto ou categoria..." style="padding-left: 40px; margin-bottom: 0;" oninput="filterTicketsTable()">
@@ -226,7 +225,16 @@
               </svg>
             </div>
             <div>
-              <select id="filter-tickets-status" class="form-control" style="width: 200px; margin-bottom: 0;" onchange="filterTicketsTable()">
+              <select id="filter-tickets-priority" class="form-control" style="width: 180px; margin-bottom: 0;" onchange="filterTicketsTable()">
+                <option value="all">Todas as Prioridades</option>
+                <option value="low">Baixa</option>
+                <option value="medium">Média</option>
+                <option value="high">Alta</option>
+                <option value="critical">Urgente</option>
+              </select>
+            </div>
+            <div>
+              <select id="filter-tickets-status" class="form-control" style="width: 180px; margin-bottom: 0;" onchange="filterTicketsTable()">
                 <option value="all">Todos os Status</option>
                 <option value="1">Novo</option>
                 <option value="2-3">Em Atendimento</option>
