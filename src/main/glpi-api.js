@@ -478,16 +478,41 @@ async function sendInventory(inventoryData) {
 }
 
 async function updateTicketStatus(ticketId, status) {
+  return updateTicket(ticketId, { status: parseInt(status) });
+}
+
+async function updateTicket(ticketId, fields) {
   const client = buildClient();
   const headers = await authHeaders();
+  
+  const formattedFields = {};
+  for (const [key, value] of Object.entries(fields)) {
+    if (value === '' || value === null || value === undefined) {
+      formattedFields[key] = null;
+    } else {
+      const num = Number(value);
+      formattedFields[key] = isNaN(num) ? value : num;
+    }
+  }
+
   const payload = {
     input: {
       id: parseInt(ticketId),
-      status: parseInt(status)
+      ...formattedFields
     }
   };
   const res = await client.put(`${_config.glpiUrl}/apirest.php/Ticket/${ticketId}`, payload, { headers });
   return res.data;
+}
+
+async function getLocations() {
+  const client = buildClient();
+  const headers = await authHeaders();
+  const res = await client.get(`${_config.glpiUrl}/apirest.php/Location`, {
+    headers,
+    params: { range: '0-150', sort: 'name', order: 'ASC' },
+  });
+  return Array.isArray(res.data) ? res.data : [];
 }
 
 module.exports = {
@@ -508,8 +533,11 @@ module.exports = {
   getTicketFollowups,
   addFollowup,
   updateTicketStatus,
+  updateTicket,
   // Categories
   getCategories,
+  // Locations
+  getLocations,
   // Inventory
   sendInventory,
 };

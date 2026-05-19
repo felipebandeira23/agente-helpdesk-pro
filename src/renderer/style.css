@@ -948,3 +948,80 @@ body.light-theme .action-btn:hover {
   background: rgba(0, 0, 0, 0.05);
   border-color: rgba(0, 168, 117, 0.3);
 }
+
+/* Rich-text formatting margins */
+#detail-ticket-desc p,
+.message-bubble p {
+  margin-bottom: 8px;
+}
+#detail-ticket-desc p:last-child,
+.message-bubble p:last-child {
+  margin-bottom: 0;
+}
+
+/* Update Banner Premium Styles */
+.update-banner {
+  background: linear-gradient(135deg, rgba(0, 210, 147, 0.08), rgba(0, 176, 255, 0.05));
+  border: 1px solid rgba(0, 210, 147, 0.25);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px 0 rgba(0, 210, 147, 0.08);
+  animation: slideDownBanner 0.4s ease-out;
+}
+
+@keyframes slideDownBanner {
+  from { opacity: 0; transform: translateY(-15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.update-banner-icon {
+  background: rgba(0, 210, 147, 0.1);
+  color: var(--accent-neon);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 10px rgba(0, 210, 147, 0.15);
+}
+
+.update-banner-content {
+  flex: 1;
+}
+
+.update-banner-content h4 {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.update-banner-content p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.update-banner-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Light theme support */
+body.light-theme .update-banner {
+  background: linear-gradient(135deg, rgba(0, 168, 117, 0.06), rgba(0, 130, 180, 0.03));
+  border-color: rgba(0, 168, 117, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+

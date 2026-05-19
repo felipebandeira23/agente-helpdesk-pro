@@ -80,6 +80,21 @@
 
     <div class="main-content">
       
+      <!-- Global Update Notification Banner -->
+      <div id="global-update-banner" class="update-banner" style="display: none;">
+        <div class="update-banner-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 11h-2V7h2v6zm0 4h-2v-2h2v2z"/></svg>
+        </div>
+        <div class="update-banner-content">
+          <h4>Nova Atualização Disponível! (Versão <span id="banner-update-version">--</span>)</h4>
+          <p id="banner-update-changelog">Novidades estão prontas para serem instaladas no seu agente.</p>
+        </div>
+        <div class="update-banner-actions">
+          <button class="btn-primary" id="btn-banner-update-download" onclick="startUpdateWorkflow()" style="padding: 6px 14px; font-size: 11.5px; border-radius: 6px; box-shadow: 0 4px 10px rgba(0, 210, 147, 0.2);">Atualizar Agora</button>
+          <button class="btn-secondary" onclick="dismissUpdateBanner()" style="padding: 6px 12px; font-size: 11.5px; border-radius: 6px;">Depois</button>
+        </div>
+      </div>
+
       <!-- SCREEN: DASHBOARD -->
       <section id="screen-dashboard" class="screen active">
         <!-- MeshCentral Promo Banner -->
@@ -289,9 +304,48 @@
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 15l-4-4 1.41-1.41L10 13.17l5.59-5.59L17 9l-7 7z"/></svg>
                 Controles de Chamado
               </span>
+              
+              <!-- Tipo -->
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="admin-change-type" style="font-size: 10px; margin-bottom: 6px;">Tipo</label>
+                <select id="admin-change-type" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('type', this.value)">
+                  <option value="1">Incidente</option>
+                  <option value="2">Requisição</option>
+                </select>
+              </div>
+
+              <!-- Categoria -->
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="admin-change-category" style="font-size: 10px; margin-bottom: 6px;">Categoria</label>
+                <select id="admin-change-category" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('itilcategories_id', this.value)">
+                  <option value="">Carregando categorias...</option>
+                </select>
+              </div>
+
+              <!-- Urgência -->
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="admin-change-urgency" style="font-size: 10px; margin-bottom: 6px;">Urgência</label>
+                <select id="admin-change-urgency" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('urgency', this.value)">
+                  <option value="1">Muito Baixa</option>
+                  <option value="2">Baixa</option>
+                  <option value="3">Média</option>
+                  <option value="4">Alta</option>
+                  <option value="5">Muito Alta</option>
+                </select>
+              </div>
+
+              <!-- Localização -->
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="admin-change-location" style="font-size: 10px; margin-bottom: 6px;">Localização</label>
+                <select id="admin-change-location" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('locations_id', this.value)">
+                  <option value="">Carregando localizações...</option>
+                </select>
+              </div>
+
+              <!-- Alterar Status -->
               <div class="form-group" style="margin-bottom: 0;">
                 <label for="admin-change-status" style="font-size: 10px; margin-bottom: 6px;">Alterar Status</label>
-                <select id="admin-change-status" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketStatusFromAdmin(this.value)">
+                <select id="admin-change-status" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('status', this.value)">
                   <option value="1">Novo</option>
                   <option value="2">Em Atendimento</option>
                   <option value="4">Pendente</option>
@@ -299,6 +353,7 @@
                   <option value="6">Fechado</option>
                 </select>
               </div>
+
               <button class="btn-primary" id="btn-admin-close-ticket" style="background: linear-gradient(135deg, var(--danger), #b91c1c); color: white; width: 100%; justify-content: center; font-size: 12px; padding: 10px; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15); margin-top: 4px;" onclick="closeTicketFromAdmin()">
                 Fechar Chamado
               </button>
@@ -523,6 +578,36 @@
             </div>
           </form>
         </div>
+
+        <!-- SCREEN: SETTINGS (ABOUT & UPDATES CARD) -->
+        <div class="card" style="max-width: 700px; margin: 24px auto 0 auto; display: flex; flex-direction: column; gap: 18px;">
+          <div style="border-bottom: 1px solid var(--border-glass); padding-bottom: 12px;">
+            <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="color: var(--accent-cyan);"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+              Sobre o Agente e Atualizações
+            </h3>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13.5px;">
+            <div>
+              <div style="font-weight: 600; color: var(--text-primary);">Agente Helpdesk Pro</div>
+              <div style="color: var(--text-muted); font-size: 12px; margin-top: 2px;">Versão Instalada: <span id="settings-app-version">1.0.0</span></div>
+            </div>
+            <div id="settings-update-status-box" style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 12px; color: var(--text-muted);" id="settings-update-status-text">Buscando informações do servidor...</span>
+              <button class="btn-secondary" id="btn-settings-check-update" style="font-size: 12px; padding: 6px 12px;" onclick="checkUpdatesManually()">Buscar Atualizações</button>
+            </div>
+          </div>
+          <div id="settings-update-progress-row" style="display: none; flex-direction: column; gap: 8px; border-top: 1px solid var(--border-glass); padding-top: 12px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary);">
+              <span id="settings-update-progress-label">Baixando atualização...</span>
+              <span id="settings-update-progress-percent">0%</span>
+            </div>
+            <div style="height: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 3px; overflow: hidden;">
+              <div id="settings-update-progress-bar" style="height: 100%; width: 0%; background: var(--accent-neon); transition: width 0.1s ease-out; box-shadow: 0 0 6px var(--accent-neon-glow);"></div>
+            </div>
+          </div>
+        </div>
+
       </section>
 
     </div>

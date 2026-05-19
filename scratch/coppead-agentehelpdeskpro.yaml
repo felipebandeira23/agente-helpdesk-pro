@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://github.com/microsoft/winget-cli/releases/latest/download/singleton.schema.json
+PackageIdentifier: Coppead.AgenteHelpdeskPro
+PackageVersion: 1.0.0
+Publisher: COPPEAD UFRJ
+PackageName: Agente Helpdesk Pro
+License: Proprietary
+ShortDescription: Central inteligente de chamados e suporte remoto (MeshCentral/GLPI) da COPPEAD
+Description: |
+  O Agente Helpdesk Pro permite aos usuários da COPPEAD UFRJ abrir chamados técnicos no GLPI,
+  visualizar e atualizar interações de chamados em tempo real, monitorar telemetria do sistema
+  e receber suporte remoto de forma rápida e integrada via MeshCentral.
+Moniker: agente-helpdesk
+Tags:
+  - glpi
+  - helpdesk
+  - suporte
+  - remoto
+  - meshcentral
+  - ufrj
+  - coppead
+Commands:
+  - agente-helpdesk-pro
+Installers:
+  - Architecture: x64
+    InstallerType: nsis
+    InstallerUrl: https://chamados.intranet.coppead.ufrj.br/agent/updates/Agente-Helpdesk-Pro-Setup.exe
+    InstallerSha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 # Substituir com o SHA-256 real do instalador
+    InstallerSwitches:
+      Silent: /S
+      SilentWithProgress: /S
+    UpgradeBehavior: install
+    AppsAndFeaturesEntries:
+      - DisplayName: Agente Helpdesk Pro
+        Publisher: COPPEAD UFRJ
+ManifestType: singleton
+ManifestVersion: 1.4.0

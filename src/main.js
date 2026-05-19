@@ -56,6 +56,7 @@ async function ensureMeshAgentInstalled() {
 
 // GLPI API Module
 const glpiApi = require('./main/glpi-api');
+const updateManager = require('./main/update-manager');
 
 let mainWindow;
 let tray = null;
@@ -377,6 +378,22 @@ ipcMain.handle('glpi-update-ticket-status', async (event, { ticketId, status }) 
   }
 });
 
+ipcMain.handle('glpi-update-ticket', async (event, { ticketId, fields }) => {
+  try {
+    return await glpiApi.updateTicket(ticketId, fields);
+  } catch (e) {
+    return { error: e.message };
+  }
+});
+
+ipcMain.handle('glpi-get-locations', async () => {
+  try {
+    return await glpiApi.getLocations();
+  } catch (e) {
+    return [];
+  }
+});
+
 
 ipcMain.handle('check-mesh-agent', async () => {
   return new Promise((resolve) => {
@@ -425,5 +442,37 @@ ipcMain.handle('test-mesh-connection', async (event, meshUrl) => {
 ipcMain.handle('show-notification', (event, { title, body }) => {
   if (Notification.isSupported()) {
     new Notification({ title, body }).show();
+  }
+});
+
+// ─── Automated Update IPC Handlers ─────────────────────────────────────────
+
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    return await updateManager.checkForUpdates();
+  } catch (e) {
+    return { updateAvailable: false, error: e.message };
+  }
+});
+
+ipcMain.handle('download-update', async (event, downloadUrl) => {
+  try {
+    const installerPath = await updateManager.downloadUpdate(downloadUrl, (progress) => {
+      if (mainWindow) {
+        mainWindow.webContents.send('update-progress', progress);
+      }
+    });
+    return { success: true, installerPath };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('install-update', async (event, installerPath) => {
+  try {
+    await updateManager.installAndExit(installerPath);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message };
   }
 });

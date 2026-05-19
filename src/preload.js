@@ -27,6 +27,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   glpiGetFollowups:    (ticketId) => ipcRenderer.invoke('glpi-get-followups', ticketId),
   glpiAddFollowup:     (ticketId, message) => ipcRenderer.invoke('glpi-add-followup', { ticketId, message }),
   glpiUpdateTicketStatus: (ticketId, status) => ipcRenderer.invoke('glpi-update-ticket-status', { ticketId, status }),
+  glpiUpdateTicket:    (ticketId, fields) => ipcRenderer.invoke('glpi-update-ticket', { ticketId, fields }),
+  glpiGetLocations:    () => ipcRenderer.invoke('glpi-get-locations'),
   glpiGetUserRole:     () => ipcRenderer.invoke('glpi-get-user-role'),
 
 
@@ -36,5 +38,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // MeshCentral
   checkMeshAgent:      () => ipcRenderer.invoke('check-mesh-agent'),
   testMeshConnection:  (url) => ipcRenderer.invoke('test-mesh-connection', url),
+
+  // Atualizações Automatizadas
+  checkForUpdates:     () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate:      (url) => ipcRenderer.invoke('download-update', url),
+  installUpdate:       (installerPath) => ipcRenderer.invoke('install-update', installerPath),
+  onUpdateProgress:    (callback) => {
+    const subscription = (event, progress) => callback(progress);
+    ipcRenderer.on('update-progress', subscription);
+    return () => ipcRenderer.removeListener('update-progress', subscription);
+  }
 });
 

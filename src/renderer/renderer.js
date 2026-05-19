@@ -61,6 +61,13 @@ function setupInitialUI() {
     }).catch(err => {
       console.error('[RENDERER] Falha ao carregar papéis do usuário:', err);
     });
+
+    // Set app version inside Settings screen
+    const versionSpan = document.getElementById('settings-app-version');
+    if (versionSpan) versionSpan.textContent = '1.0.0';
+
+    // Check updates silently shortly after startup
+    setTimeout(checkUpdatesSilently, 4000);
   }
 }
 
@@ -76,9 +83,10 @@ async function checkProxyStatus() {
       dot.className = 'status-dot online';
       text.textContent = 'Proxy Local Conectado';
       
-      // Load categories & tickets if empty
+      // Load categories, locations & tickets if empty
       if (categoriesList.length === 0) {
         loadCategories();
+        loadLocations();
       }
       loadTickets();
     } else {
@@ -125,8 +133,42 @@ async function loadCategories() {
       opt.textContent = cat.name;
       selectEl.appendChild(opt);
     });
+
+    // Populate admin controls category dropdown
+    const adminCategorySelect = document.getElementById('admin-change-category');
+    if (adminCategorySelect) {
+      adminCategorySelect.innerHTML = '<option value="">Selecione uma categoria...</option>';
+      categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.id;
+        opt.textContent = cat.name;
+        adminCategorySelect.appendChild(opt);
+      });
+    }
   } catch (e) {
     selectEl.innerHTML = '<option value="">Falha ao obter categorias (Offline)</option>';
+  }
+}
+
+let locationsList = [];
+async function loadLocations() {
+  const selectEl = document.getElementById('admin-change-location');
+  if (!selectEl) return;
+  try {
+    let locations = [];
+    if (window.electronAPI) {
+      locations = await window.electronAPI.glpiGetLocations();
+    }
+    locationsList = locations;
+    selectEl.innerHTML = '<option value="">Selecione uma localização...</option>';
+    locations.forEach(loc => {
+      const opt = document.createElement('option');
+      opt.value = loc.id;
+      opt.textContent = loc.name;
+      selectEl.appendChild(opt);
+    });
+  } catch (e) {
+    selectEl.innerHTML = '<option value="">Falha ao obter localizações</option>';
   }
 }
 
@@ -149,6 +191,8 @@ async function loadTickets() {
         tickets = await res.json();
       }
     }
+    // Sort descending by ID (chronological from newest to oldest)
+    tickets.sort((a, b) => parseInt(b.id) - parseInt(a.id));
     ticketsList = tickets;
     filterTicketsTable();
   } catch (e) {
@@ -169,7 +213,7 @@ function renderTicketsTable(tickets) {
   }
 
   // Sort descending by ID
-  tickets.sort((a, b) => b.id - a.id);
+  tickets.sort((a, b) => parseInt(b.id) - parseInt(a.id));
 
   let htmlRows = '';
   tickets.forEach(ticket => {
@@ -349,6 +393,7 @@ function switchScreen(screenName) {
       headerText.textContent = 'Configurações do Agente';
       headerIcon.innerHTML = '<path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="currentColor"/>';
       loadAgentSettingsIntoForm();
+      refreshSettingsUpdateUI();
       break;
     case 'ticket-detail':
       headerText.textContent = 'Detalhes do Chamado';
@@ -468,11 +513,28 @@ async function viewTicketDetails(ticketId) {
   const ticket = ticketsList.find(t => t.id == ticketId);
   if (!ticket) return;
 
+  // Set Info Panel & Pre-select Admin values
+  updateTicketDetailsUI(ticket);
+
+  // Clear timeline and show loader
+  const timeline = document.getElementById('chat-timeline');
+  timeline.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">Buscando conversas...</div>';
+
+  // Load Followups
+  await loadFollowups(ticketId);
+
+  // Poll for new messages every 5 seconds while viewing this ticket
+  chatPollInterval = setInterval(() => {
+    loadFollowups(ticketId);
+  }, 5000);
+}
+
+function updateTicketDetailsUI(ticket) {
   // Set Info Panel
   document.getElementById('detail-ticket-id').textContent = `#${ticket.id}`;
   document.getElementById('detail-ticket-title').textContent = ticket.name;
   document.getElementById('detail-ticket-category').textContent = ticket.category_name || 'Geral / Suporte';
-  document.getElementById('detail-ticket-desc').textContent = ticket.content;
+  document.getElementById('detail-ticket-desc').innerHTML = ticket.content || '';
   document.getElementById('detail-ticket-date').textContent = ticket.date_creation || 'Não disponível';
 
   // Set priority label
@@ -506,11 +568,32 @@ async function viewTicketDetails(ticketId) {
   if (adminSection) {
     if (userRoles.isSuperAdmin || userRoles.isTecnico) {
       adminSection.style.display = 'flex';
+      
       const statusSelect = document.getElementById('admin-change-status');
       if (statusSelect) {
         let val = parseInt(ticket.status);
         if (val === 3) val = 2; // maps to Em Atendimento
         statusSelect.value = String(val);
+      }
+
+      const typeSelect = document.getElementById('admin-change-type');
+      if (typeSelect && ticket.type) {
+        typeSelect.value = String(ticket.type);
+      }
+
+      const categorySelect = document.getElementById('admin-change-category');
+      if (categorySelect && ticket.itilcategories_id) {
+        categorySelect.value = String(ticket.itilcategories_id);
+      }
+
+      const urgencySelect = document.getElementById('admin-change-urgency');
+      if (urgencySelect && ticket.urgency) {
+        urgencySelect.value = String(ticket.urgency);
+      }
+
+      const locationSelect = document.getElementById('admin-change-location');
+      if (locationSelect && ticket.locations_id) {
+        locationSelect.value = String(ticket.locations_id);
       }
       
       const closeBtn = document.getElementById('btn-admin-close-ticket');
@@ -529,18 +612,6 @@ async function viewTicketDetails(ticketId) {
       adminSection.style.display = 'none';
     }
   }
-
-  // Clear timeline and show loader
-  const timeline = document.getElementById('chat-timeline');
-  timeline.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">Buscando conversas...</div>';
-
-  // Load Followups
-  await loadFollowups(ticketId);
-
-  // Poll for new messages every 5 seconds while viewing this ticket
-  chatPollInterval = setInterval(() => {
-    loadFollowups(ticketId);
-  }, 5000);
 }
 
 // Load Followups/Chat Bubble
@@ -585,7 +656,7 @@ async function loadFollowups(ticketId) {
       htmlBubbles += `
         <div class="message-bubble ${bubbleClass}">
           <span class="message-meta">${escapeHtml(sender)} • ${f.date_creation || f.date || ''}</span>
-          <div>${escapeHtml(f.content)}</div>
+          <div>${f.content || ''}</div>
         </div>
       `;
     });
@@ -1100,47 +1171,56 @@ function filterTicketsTable() {
 }
 
 // Alterar o status do chamado em tempo real diretamente pelo agente
-async function updateTicketStatusFromAdmin(status) {
+// Editar informações do chamado (tipo, categoria, urgência, localização, status)
+async function updateTicketFieldFromAdmin(field, value) {
   if (!activeTicketId) return;
 
-  const selectEl = document.getElementById('admin-change-status');
+  const elementId = {
+    'type': 'admin-change-type',
+    'itilcategories_id': 'admin-change-category',
+    'urgency': 'admin-change-urgency',
+    'locations_id': 'admin-change-location',
+    'status': 'admin-change-status'
+  }[field];
+  
+  const selectEl = document.getElementById(elementId);
 
-  if (!confirm('Deseja realmente alterar o status deste chamado?')) {
-    // Reverter seleção para o status atual
+  if (!confirm('Deseja realmente alterar esta informação do chamado?')) {
+    // Reverter seleção para o valor atual
     const ticket = ticketsList.find(t => t.id == activeTicketId);
-    if (ticket) {
-      let val = parseInt(ticket.status);
-      if (val === 3) val = 2;
-      selectEl.value = String(val);
+    if (ticket && selectEl) {
+      let currentVal = ticket[field];
+      if (field === 'status' && currentVal === 3) currentVal = 2;
+      selectEl.value = currentVal ? String(currentVal) : '';
     }
     return;
   }
 
   try {
     if (window.electronAPI) {
-      selectEl.disabled = true;
-      const res = await window.electronAPI.glpiUpdateTicketStatus(activeTicketId, status);
-      selectEl.disabled = false;
+      if (selectEl) selectEl.disabled = true;
+      const res = await window.electronAPI.glpiUpdateTicket(activeTicketId, { [field]: value });
+      if (selectEl) selectEl.disabled = false;
 
       if (res && !res.error) {
-        alert('Status do chamado atualizado com sucesso!');
+        alert('Chamado atualizado com sucesso!');
         await refreshActiveTicketDetails();
       } else {
-        alert(`Erro ao atualizar status: ${res.error || 'Erro desconhecido'}`);
+        alert(`Erro ao atualizar chamado: ${res.error || 'Erro desconhecido'}`);
         // Reverter seleção
         const ticket = ticketsList.find(t => t.id == activeTicketId);
-        if (ticket) {
-          let val = parseInt(ticket.status);
-          if (val === 3) val = 2;
-          selectEl.value = String(val);
+        if (ticket && selectEl) {
+          let currentVal = ticket[field];
+          if (field === 'status' && currentVal === 3) currentVal = 2;
+          selectEl.value = currentVal ? String(currentVal) : '';
         }
       }
     } else {
       alert('Ação disponível apenas no aplicativo Agente.');
     }
   } catch (e) {
-    selectEl.disabled = false;
-    alert(`Erro de rede ao atualizar status: ${e.message}`);
+    if (selectEl) selectEl.disabled = false;
+    alert(`Erro de rede ao atualizar chamado: ${e.message}`);
   }
 }
 
@@ -1190,46 +1270,163 @@ async function refreshActiveTicketDetails() {
   const ticket = ticketsList.find(t => t.id == activeTicketId);
   if (!ticket) return;
 
-  // Atualizar a pílula de status na tela
-  let sDot = 'black';
-  let sText = 'Pendente';
-  switch (parseInt(ticket.status)) {
-    case 1: sDot = 'red'; sText = 'Novo'; break;
-    case 2:
-    case 3: sDot = 'yellow'; sText = 'Em Atendimento'; break;
-    case 4: sDot = 'yellow'; sText = 'Pendente'; break;
-    case 5: sDot = 'green'; sText = 'Solucionado'; break;
-    case 6: sDot = 'black'; sText = 'Fechado'; break;
-  }
-  document.getElementById('detail-ticket-status').innerHTML = `
-    <div class="status-pill">
-      <span class="status-pill-dot ${sDot}"></span>
-      <span>${sText}</span>
-    </div>
-  `;
+  // 3. Atualizar painel de informações, pílulas, dropdowns e botão de fechar
+  updateTicketDetailsUI(ticket);
 
-  // Atualizar o seletor de status
-  const statusSelect = document.getElementById('admin-change-status');
-  if (statusSelect) {
-    let val = parseInt(ticket.status);
-    if (val === 3) val = 2;
-    statusSelect.value = String(val);
-  }
+  // 4. Recarregar a timeline de interações
+  await loadFollowups(activeTicketId);
+}
 
-  // Atualizar botão de fechar chamado
-  const closeBtn = document.getElementById('btn-admin-close-ticket');
-  if (closeBtn) {
-    if (parseInt(ticket.status) === 6) {
-      closeBtn.disabled = true;
-      closeBtn.textContent = 'Chamado Fechado';
-      closeBtn.style.opacity = '0.5';
+// ─── Lógica de Atualizações Automatizadas (Auto-Updater) ───────────────────
+
+let updateInfoCache = null;
+let updateDownloadProgressSubscription = null;
+
+async function checkUpdatesSilently() {
+  if (!window.electronAPI) return;
+  try {
+    const res = await window.electronAPI.checkForUpdates();
+    if (res && res.updateAvailable) {
+      updateInfoCache = res;
+      displayUpdateBanner(res);
+      
+      // Envia notificação nativa do Windows
+      window.electronAPI.showNotification({
+        title: 'Nova atualização disponível!',
+        body: `A versão ${res.latestVersion} está pronta. Clique para atualizar.`
+      });
     } else {
-      closeBtn.disabled = false;
-      closeBtn.textContent = 'Fechar Chamado';
-      closeBtn.style.opacity = '1';
+      console.log('[AUTO-UPDATER] Nenhuma nova atualização disponível no momento.');
+    }
+  } catch (e) {
+    console.warn('[AUTO-UPDATER] Falha na checagem automática silenciosa:', e.message);
+  }
+}
+
+function displayUpdateBanner(info) {
+  const banner = document.getElementById('global-update-banner');
+  const versionSpan = document.getElementById('banner-update-version');
+  const changelogP = document.getElementById('banner-update-changelog');
+  
+  if (banner && versionSpan && changelogP) {
+    versionSpan.textContent = info.latestVersion;
+    changelogP.textContent = info.changelog || 'Novidades estão prontas para serem instaladas.';
+    banner.style.display = 'flex';
+  }
+}
+
+function dismissUpdateBanner() {
+  const banner = document.getElementById('global-update-banner');
+  if (banner) banner.style.display = 'none';
+}
+
+async function checkUpdatesManually() {
+  const checkBtn = document.getElementById('btn-settings-check-update');
+  const statusText = document.getElementById('settings-update-status-text');
+  
+  if (!window.electronAPI) {
+    alert('A checagem de atualizações só está disponível no aplicativo Agente.');
+    return;
+  }
+  
+  if (checkBtn) checkBtn.disabled = true;
+  if (statusText) statusText.textContent = 'Buscando atualizações no servidor Coppead...';
+  
+  try {
+    const res = await window.electronAPI.checkForUpdates();
+    if (checkBtn) checkBtn.disabled = false;
+    
+    if (res && res.updateAvailable) {
+      updateInfoCache = res;
+      displayUpdateBanner(res);
+      if (statusText) {
+        statusText.innerHTML = `<strong style="color: var(--accent-neon);">Nova versão ${res.latestVersion} disponível!</strong>`;
+      }
+      alert(`Uma nova versão (${res.latestVersion}) do Agente Helpdesk Pro está disponível!\n\nNovidades:\n${res.changelog}`);
+    } else if (res && res.error) {
+      if (statusText) statusText.textContent = `Falha: ${res.error}`;
+      alert(`Falha ao checar atualizações: ${res.error}`);
+    } else {
+      if (statusText) statusText.textContent = 'O aplicativo está na versão mais recente (v1.0.0).';
+      alert('Seu agente já está na versão mais recente (v1.0.0). Nenhuma ação é necessária!');
+    }
+  } catch (e) {
+    if (checkBtn) checkBtn.disabled = false;
+    if (statusText) statusText.textContent = 'Erro ao verificar atualizações.';
+    alert(`Erro de conexão com o servidor de atualizações: ${e.message}`);
+  }
+}
+
+function refreshSettingsUpdateUI() {
+  const statusText = document.getElementById('settings-update-status-text');
+  if (!statusText) return;
+  
+  if (updateInfoCache && updateInfoCache.updateAvailable) {
+    statusText.innerHTML = `<strong style="color: var(--accent-neon);">Nova versão ${updateInfoCache.latestVersion} disponível!</strong>`;
+  } else {
+    statusText.textContent = 'O aplicativo está na versão mais recente (v1.0.0).';
+  }
+}
+
+async function startUpdateWorkflow() {
+  if (!updateInfoCache || !updateInfoCache.downloadUrl) {
+    alert('Nenhuma atualização em andamento ou link de download disponível.');
+    return;
+  }
+
+  const downloadBtn = document.getElementById('btn-banner-update-download');
+  const progressRow = document.getElementById('settings-update-progress-row');
+  const progressLabel = document.getElementById('settings-update-progress-label');
+  const progressPercent = document.getElementById('settings-update-progress-percent');
+  const progressBar = document.getElementById('settings-update-progress-bar');
+  
+  if (downloadBtn) {
+    downloadBtn.disabled = true;
+    downloadBtn.textContent = 'Baixando...';
+  }
+  
+  // Abre a tela de configurações para mostrar o progresso visual do download
+  switchScreen('settings');
+  
+  if (progressRow) progressRow.style.display = 'flex';
+  if (progressLabel) progressLabel.textContent = 'Baixando instalador do Agente...';
+  
+  // Inscreve no progresso do download via IPC
+  if (typeof updateDownloadProgressSubscription === 'function') {
+    updateDownloadProgressSubscription();
+  }
+  
+  updateDownloadProgressSubscription = window.electronAPI.onUpdateProgress((percent) => {
+    if (progressPercent) progressPercent.textContent = `${percent}%`;
+    if (progressBar) progressBar.style.width = `${percent}%`;
+  });
+
+  try {
+    const downloadRes = await window.electronAPI.downloadUpdate(updateInfoCache.downloadUrl);
+    
+    if (downloadRes && downloadRes.success) {
+      if (progressLabel) progressLabel.textContent = 'Instalando atualização de forma silenciosa...';
+      if (downloadBtn) downloadBtn.textContent = 'Instalando...';
+      
+      // Inicia a instalação silenciosa
+      const installRes = await window.electronAPI.installUpdate(downloadRes.installerPath);
+      if (!installRes || installRes.error) {
+        throw new Error(installRes ? installRes.error : 'Erro desconhecido na instalação');
+      }
+    } else {
+      throw new Error(downloadRes ? downloadRes.error : 'Erro no download');
+    }
+  } catch (err) {
+    if (downloadBtn) {
+      downloadBtn.disabled = false;
+      downloadBtn.textContent = 'Atualizar Agora';
+    }
+    if (progressLabel) progressLabel.textContent = 'Erro ao instalar atualização.';
+    alert(`Erro crítico durante o processo de atualização: ${err.message}`);
+  } finally {
+    if (typeof updateDownloadProgressSubscription === 'function') {
+      updateDownloadProgressSubscription();
+      updateDownloadProgressSubscription = null;
     }
   }
-
-  // Recarregar a timeline de interações
-  await loadFollowups(activeTicketId);
 }
