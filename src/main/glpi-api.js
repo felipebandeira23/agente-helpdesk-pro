@@ -230,7 +230,7 @@ async function findUserByLogin(login) {
     const res = await client.get(`${_config.glpiUrl}/apirest.php/User`, {
       headers,
       params: {
-        searchText: JSON.stringify({ name: login }),
+        searchText: login,
         range: '0-1',
       },
     });
@@ -241,6 +241,7 @@ async function findUserByLogin(login) {
   } catch (e) {}
   return null;
 }
+
 
 /**
  * Retorna o ID do usuário atual autenticado na sessão
@@ -314,14 +315,29 @@ async function getMyTickets(userId) {
   const headers = await authHeaders();
 
   const params = {
-    range: '0-50',
+    range: '0-150',
     sort: 'date_mod',
     order: 'DESC',
   };
 
   const res = await client.get(`${_config.glpiUrl}/apirest.php/Ticket`, { headers, params });
-  return Array.isArray(res.data) ? res.data : [];
+  let tickets = Array.isArray(res.data) ? res.data : [];
+
+  try {
+    const profileRes = await getMyProfile();
+    const profiles = profileRes.myprofiles || [];
+    const isSuperAdmin = profiles.some(p => p.name && p.name.toLowerCase().includes('super-admin'));
+    if (!isSuperAdmin && userId) {
+      console.log(`[GLPI-API] Usuário ID ${userId} não é Super-Admin. Filtrando chamados por requerente.`);
+      tickets = tickets.filter(t => t.users_id_recipient == userId);
+    }
+  } catch (err) {
+    console.error('[GLPI-API] Erro ao filtrar chamados por perfil:', err.message);
+  }
+
+  return tickets;
 }
+
 
 /**
  * Retorna detalhes de um chamado específico
@@ -461,6 +477,19 @@ async function sendInventory(inventoryData) {
   return res.data;
 }
 
+async function updateTicketStatus(ticketId, status) {
+  const client = buildClient();
+  const headers = await authHeaders();
+  const payload = {
+    input: {
+      id: parseInt(ticketId),
+      status: parseInt(status)
+    }
+  };
+  const res = await client.put(`${_config.glpiUrl}/apirest.php/Ticket/${ticketId}`, payload, { headers });
+  return res.data;
+}
+
 module.exports = {
   // Config
   setGlpiConfig,
@@ -478,6 +507,7 @@ module.exports = {
   getTicket,
   getTicketFollowups,
   addFollowup,
+  updateTicketStatus,
   // Categories
   getCategories,
   // Inventory

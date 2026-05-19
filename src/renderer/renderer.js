@@ -7,6 +7,7 @@ let categoriesList = [];
 let activeTicketId = null;
 let chatPollInterval = null;
 let proxyPollInterval = null;
+let userRoles = { isSuperAdmin: false, isTecnico: false };
 
 // Realtime Telemetry Charts
 let cpuChart = null;
@@ -52,8 +53,17 @@ function setupInitialUI() {
     }).catch(err => {
       document.getElementById('user-display-name').textContent = 'Usuário Local';
     });
+
+    // Fetch GLPI User Roles
+    window.electronAPI.glpiGetUserRole().then(roles => {
+      userRoles = roles;
+      console.log('[RENDERER] Papéis do usuário carregados:', userRoles);
+    }).catch(err => {
+      console.error('[RENDERER] Falha ao carregar papéis do usuário:', err);
+    });
   }
 }
+
 
 // Check Proxy Status
 async function checkProxyStatus() {
@@ -140,7 +150,7 @@ async function loadTickets() {
       }
     }
     ticketsList = tickets;
-    renderTicketsTable(ticketsList);
+    filterTicketsTable();
   } catch (e) {
     console.error('Falha ao obter chamados:', e);
   }
@@ -231,7 +241,7 @@ function renderTicketsTable(tickets) {
   tbodyList.innerHTML = htmlRows;
   
   // Dashboard shows top 3 recent tickets only for clean visual balance
-  const top3 = tickets.slice(0, 3);
+  const top3 = ticketsList.slice(0, 3);
   let htmlDashboard = '';
   if (top3.length === 0) {
     htmlDashboard = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhum chamado aberto.</td></tr>`;
@@ -490,6 +500,35 @@ async function viewTicketDetails(ticketId) {
       <span>${sText}</span>
     </div>
   `;
+
+  // Condicionar a exibição dos controles administrativos (Super-Admin / Técnico)
+  const adminSection = document.getElementById('admin-controls-section');
+  if (adminSection) {
+    if (userRoles.isSuperAdmin || userRoles.isTecnico) {
+      adminSection.style.display = 'flex';
+      const statusSelect = document.getElementById('admin-change-status');
+      if (statusSelect) {
+        let val = parseInt(ticket.status);
+        if (val === 3) val = 2; // maps to Em Atendimento
+        statusSelect.value = String(val);
+      }
+      
+      const closeBtn = document.getElementById('btn-admin-close-ticket');
+      if (closeBtn) {
+        if (parseInt(ticket.status) === 6) {
+          closeBtn.disabled = true;
+          closeBtn.textContent = 'Chamado Fechado';
+          closeBtn.style.opacity = '0.5';
+        } else {
+          closeBtn.disabled = false;
+          closeBtn.textContent = 'Fechar Chamado';
+          closeBtn.style.opacity = '1';
+        }
+      }
+    } else {
+      adminSection.style.display = 'none';
+    }
+  }
 
   // Clear timeline and show loader
   const timeline = document.getElementById('chat-timeline');
@@ -1018,6 +1057,179 @@ function updateChartsTheme(isLight) {
   if (memMiniChart) {
     memMiniChart.data.datasets[0].backgroundColor[1] = miniBg;
     memMiniChart.data.datasets[0].hoverBackgroundColor[1] = miniBg;
+    memMiniChart.data.datasets[0].hoverBackgroundColor[1] = miniBg;
     memMiniChart.update();
   }
+}
+
+// Lógica de filtragem client-side para a tela "Meus Chamados"
+function filterTicketsTable() {
+  const searchQuery = document.getElementById('search-tickets-input').value.toLowerCase().trim();
+  const statusFilter = document.getElementById('filter-tickets-status').value;
+
+  const filtered = ticketsList.filter(ticket => {
+    // 1. Filtragem por busca textual (ID, Assunto ou Categoria)
+    let matchesSearch = true;
+    if (searchQuery) {
+      const ticketId = `#${ticket.id}`;
+      const name = (ticket.name || '').toLowerCase();
+      const category = (ticket.category_name || '').toLowerCase();
+      const idStr = String(ticket.id);
+      
+      matchesSearch = name.includes(searchQuery) || 
+                      category.includes(searchQuery) || 
+                      ticketId.includes(searchQuery) ||
+                      idStr.includes(searchQuery);
+    }
+
+    // 2. Filtragem por status selecionado
+    let matchesStatus = true;
+    if (statusFilter !== 'all') {
+      const ticketStatus = parseInt(ticket.status);
+      if (statusFilter === '2-3') {
+        matchesStatus = (ticketStatus === 2 || ticketStatus === 3);
+      } else {
+        matchesStatus = (ticketStatus === parseInt(statusFilter));
+      }
+    }
+
+    return matchesSearch && matchesStatus;
+  });
+
+  renderTicketsTable(filtered);
+}
+
+// Alterar o status do chamado em tempo real diretamente pelo agente
+async function updateTicketStatusFromAdmin(status) {
+  if (!activeTicketId) return;
+
+  const selectEl = document.getElementById('admin-change-status');
+
+  if (!confirm('Deseja realmente alterar o status deste chamado?')) {
+    // Reverter seleção para o status atual
+    const ticket = ticketsList.find(t => t.id == activeTicketId);
+    if (ticket) {
+      let val = parseInt(ticket.status);
+      if (val === 3) val = 2;
+      selectEl.value = String(val);
+    }
+    return;
+  }
+
+  try {
+    if (window.electronAPI) {
+      selectEl.disabled = true;
+      const res = await window.electronAPI.glpiUpdateTicketStatus(activeTicketId, status);
+      selectEl.disabled = false;
+
+      if (res && !res.error) {
+        alert('Status do chamado atualizado com sucesso!');
+        await refreshActiveTicketDetails();
+      } else {
+        alert(`Erro ao atualizar status: ${res.error || 'Erro desconhecido'}`);
+        // Reverter seleção
+        const ticket = ticketsList.find(t => t.id == activeTicketId);
+        if (ticket) {
+          let val = parseInt(ticket.status);
+          if (val === 3) val = 2;
+          selectEl.value = String(val);
+        }
+      }
+    } else {
+      alert('Ação disponível apenas no aplicativo Agente.');
+    }
+  } catch (e) {
+    selectEl.disabled = false;
+    alert(`Erro de rede ao atualizar status: ${e.message}`);
+  }
+}
+
+// Fechar chamado administrativo (Status 6)
+async function closeTicketFromAdmin() {
+  if (!activeTicketId) return;
+
+  const closeBtn = document.getElementById('btn-admin-close-ticket');
+
+  if (!confirm('Deseja realmente FECHAR este chamado definitivamente?')) {
+    return;
+  }
+
+  try {
+    if (window.electronAPI) {
+      closeBtn.disabled = true;
+      closeBtn.textContent = 'Fechando...';
+      
+      const res = await window.electronAPI.glpiUpdateTicketStatus(activeTicketId, 6); // 6 = Fechado
+      
+      if (res && !res.error) {
+        alert('Chamado fechado com sucesso!');
+        await refreshActiveTicketDetails();
+      } else {
+        alert(`Erro ao fechar chamado: ${res.error || 'Erro desconhecido'}`);
+        closeBtn.disabled = false;
+        closeBtn.textContent = 'Fechar Chamado';
+      }
+    } else {
+      alert('Ação disponível apenas no aplicativo Agente.');
+    }
+  } catch (e) {
+    closeBtn.disabled = false;
+    closeBtn.textContent = 'Fechar Chamado';
+    alert(`Erro de rede ao fechar chamado: ${e.message}`);
+  }
+}
+
+// Atualizar informações do chamado na tela de detalhes após alteração
+async function refreshActiveTicketDetails() {
+  if (!activeTicketId) return;
+
+  // 1. Recarregar lista global de chamados
+  await loadTickets();
+
+  // 2. Localizar o chamado atualizado
+  const ticket = ticketsList.find(t => t.id == activeTicketId);
+  if (!ticket) return;
+
+  // Atualizar a pílula de status na tela
+  let sDot = 'black';
+  let sText = 'Pendente';
+  switch (parseInt(ticket.status)) {
+    case 1: sDot = 'red'; sText = 'Novo'; break;
+    case 2:
+    case 3: sDot = 'yellow'; sText = 'Em Atendimento'; break;
+    case 4: sDot = 'yellow'; sText = 'Pendente'; break;
+    case 5: sDot = 'green'; sText = 'Solucionado'; break;
+    case 6: sDot = 'black'; sText = 'Fechado'; break;
+  }
+  document.getElementById('detail-ticket-status').innerHTML = `
+    <div class="status-pill">
+      <span class="status-pill-dot ${sDot}"></span>
+      <span>${sText}</span>
+    </div>
+  `;
+
+  // Atualizar o seletor de status
+  const statusSelect = document.getElementById('admin-change-status');
+  if (statusSelect) {
+    let val = parseInt(ticket.status);
+    if (val === 3) val = 2;
+    statusSelect.value = String(val);
+  }
+
+  // Atualizar botão de fechar chamado
+  const closeBtn = document.getElementById('btn-admin-close-ticket');
+  if (closeBtn) {
+    if (parseInt(ticket.status) === 6) {
+      closeBtn.disabled = true;
+      closeBtn.textContent = 'Chamado Fechado';
+      closeBtn.style.opacity = '0.5';
+    } else {
+      closeBtn.disabled = false;
+      closeBtn.textContent = 'Fechar Chamado';
+      closeBtn.style.opacity = '1';
+    }
+  }
+
+  // Recarregar a timeline de interações
+  await loadFollowups(activeTicketId);
 }

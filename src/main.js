@@ -352,6 +352,32 @@ ipcMain.handle('glpi-find-user', async (event, login) => {
   catch (e) { return null; }
 });
 
+ipcMain.handle('glpi-get-user-role', async () => {
+  try {
+    const profilesRes = await glpiApi.getMyProfile();
+    const profiles = profilesRes.myprofiles || [];
+    const isSuperAdmin = profiles.some(p => p.name && p.name.toLowerCase().includes('super-admin'));
+    const isTecnico = profiles.some(p => p.name && (
+      p.name.toLowerCase().includes('técnico') || 
+      p.name.toLowerCase().includes('tecnico') || 
+      p.name.toLowerCase().includes('gerência') || 
+      p.name.toLowerCase().includes('supervisor')
+    ));
+    return { isSuperAdmin, isTecnico };
+  } catch (e) {
+    return { isSuperAdmin: false, isTecnico: false };
+  }
+});
+
+ipcMain.handle('glpi-update-ticket-status', async (event, { ticketId, status }) => {
+  try {
+    return await glpiApi.updateTicketStatus(ticketId, status);
+  } catch (e) {
+    return { error: e.message };
+  }
+});
+
+
 ipcMain.handle('check-mesh-agent', async () => {
   return new Promise((resolve) => {
     const proc = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', 'Get-Service -Name "MeshAgent", "Mesh Agent" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Status']);

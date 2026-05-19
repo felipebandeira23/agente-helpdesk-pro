@@ -26,6 +26,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   glpiCreateTicket:    (opts)   => ipcRenderer.invoke('glpi-create-ticket', opts),
   glpiGetFollowups:    (ticketId) => ipcRenderer.invoke('glpi-get-followups', ticketId),
   glpiAddFollowup:     (ticketId, message) => ipcRenderer.invoke('glpi-add-followup', { ticketId, message }),
+  glpiUpdateTicketStatus: (ticketId, status) => ipcRenderer.invoke('glpi-update-ticket-status', { ticketId, status }),
+  glpiGetUserRole:     () => ipcRenderer.invoke('glpi-get-user-role'),
+
 
   // GLPI — Usuário
   glpiFindUser:        (login) => ipcRenderer.invoke('glpi-find-user', login),
