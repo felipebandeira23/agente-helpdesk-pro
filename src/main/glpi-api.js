@@ -275,6 +275,51 @@ async function getCategories() {
  * @param {Object} opts - { title, description, categoryId, urgency, userId, hostname, ip, osVersion }
  * urgency: 1=Muito Baixa, 2=Baixa, 3=Média, 4=Alta, 5=Muito Alta
  */
+/**
+ * Busca o ID do computador local (hostname do SO) no GLPI.
+ */
+async function findLocalComputerId() {
+  const hostname = os.hostname();
+  const client = buildClient();
+  const headers = await authHeaders();
+  
+  try {
+    const res = await client.get(`${_config.glpiUrl}/apirest.php/Computer`, {
+      headers,
+      params: { range: '0-300' }
+    });
+    
+    if (Array.isArray(res.data)) {
+      const match = res.data.find(c => c.name && c.name.toLowerCase() === hostname.toLowerCase());
+      if (match) {
+        console.log(`[GLPI-API] Computador local encontrado no GLPI. Nome: ${match.name}, ID: ${match.id}`);
+        return match.id;
+      }
+    }
+  } catch (e) {
+    console.error('[GLPI-API] Erro ao buscar ID do computador local:', e.message);
+  }
+  return null;
+}
+
+/**
+ * Associa um dispositivo (computador) a um chamado no GLPI via Item_Ticket.
+ */
+async function associateComputerToTicket(ticketId, computerId) {
+  const client = buildClient();
+  const headers = await authHeaders();
+  const payload = {
+    input: {
+      tickets_id: parseInt(ticketId),
+      itemtype: 'Computer',
+      items_id: parseInt(computerId)
+    }
+  };
+  
+  const res = await client.post(`${_config.glpiUrl}/apirest.php/Item_Ticket`, payload, { headers });
+  return res.data;
+}
+
 async function createTicket({ title, description, categoryId, urgency = 3, userId, hostname, ip, osVersion }) {
   const client = buildClient();
   const headers = await authHeaders();
@@ -303,6 +348,20 @@ async function createTicket({ title, description, categoryId, urgency = 3, userI
   };
 
   const res = await client.post(`${_config.glpiUrl}/apirest.php/Ticket`, payload, { headers });
+  
+  // Associa automaticamente o computador local ao chamado recém-criado
+  try {
+    const compId = await findLocalComputerId();
+    if (compId) {
+      console.log(`[GLPI-API] Associando computador local (ID: ${compId}) ao chamado criado #${res.data.id}...`);
+      await associateComputerToTicket(res.data.id, compId);
+    } else {
+      console.log('[GLPI-API] Computador local não encontrado no GLPI para associação.');
+    }
+  } catch (assocErr) {
+    console.error('[GLPI-API] Erro ao associar computador ao chamado criado:', assocErr.message);
+  }
+
   return res.data; // { id, message }
 }
 

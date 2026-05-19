@@ -8,6 +8,7 @@ let activeTicketId = null;
 let chatPollInterval = null;
 let proxyPollInterval = null;
 let userRoles = { isSuperAdmin: false, isTecnico: false };
+let notificationCache = {};
 
 // Realtime Telemetry Charts
 let cpuChart = null;
@@ -261,11 +262,18 @@ function renderTicketsTable(tickets) {
     }
 
     const categoryName = ticket.category_name || 'Geral / Suporte';
+    const isUnread = notificationCache[ticket.id] && notificationCache[ticket.id].unread === true;
+    const unreadIndicator = isUnread 
+      ? `<span class="unread-badge-dot" title="Mensagens não lidas do suporte"></span>` 
+      : '';
 
     htmlRows += `
       <tr>
         <td class="ticket-id">#${ticket.id}</td>
-        <td style="font-weight: 600;">${escapeHtml(ticket.name)}</td>
+        <td style="font-weight: 600;">
+          ${escapeHtml(ticket.name)}
+          ${unreadIndicator}
+        </td>
         <td style="color: var(--text-secondary);">${escapeHtml(categoryName)}</td>
         <td><span class="badge ${priorityBadge}">${priorityText}</span></td>
         <td>
@@ -309,11 +317,18 @@ function renderTicketsTable(tickets) {
         case 6: sDot = 'black'; sText = 'Fechado'; break;
       }
       const cName = t.category_name || 'Geral / Suporte';
+      const isUnreadT = notificationCache[t.id] && notificationCache[t.id].unread === true;
+      const unreadIndicatorT = isUnreadT 
+        ? `<span class="unread-badge-dot" title="Mensagens não lidas do suporte"></span>` 
+        : '';
 
       htmlDashboard += `
         <tr>
           <td class="ticket-id">#${t.id}</td>
-          <td style="font-weight: 600;">${escapeHtml(t.name)}</td>
+          <td style="font-weight: 600;">
+            ${escapeHtml(t.name)}
+            ${unreadIndicatorT}
+          </td>
           <td style="color: var(--text-secondary);">${escapeHtml(cName)}</td>
           <td><span class="badge ${pBadge}">${pText}</span></td>
           <td>
@@ -513,6 +528,15 @@ async function viewTicketDetails(ticketId) {
   // Find ticket in local cache list
   const ticket = ticketsList.find(t => t.id == ticketId);
   if (!ticket) return;
+
+  // Mark ticket as read when opened
+  if (notificationCache[ticketId]) {
+    notificationCache[ticketId].unread = false;
+    localStorage.setItem('glpi_notifications_cache', JSON.stringify(notificationCache));
+    
+    // Refresh the table views immediately so the unread indicator is removed
+    filterTicketsTable();
+  }
 
   // Set Info Panel & Pre-select Admin values
   updateTicketDetailsUI(ticket);
@@ -1452,7 +1476,6 @@ async function startUpdateWorkflow() {
 
 // ─── Lógica de Notificações de Novos Comentários nos Chamados ───────────────
 
-let notificationCache = {};
 try {
   notificationCache = JSON.parse(localStorage.getItem('glpi_notifications_cache') || '{}');
 } catch (e) {
@@ -1497,7 +1520,8 @@ async function checkForTicketUpdates(tickets) {
       notificationCache[ticketId] = {
         dateMod: ticket.date_mod,
         lastFollowupId: null,
-        initialized: false
+        initialized: false,
+        unread: false
       };
       cacheUpdated = true;
 
@@ -1509,6 +1533,7 @@ async function checkForTicketUpdates(tickets) {
         }
         notificationCache[ticketId].initialized = true;
         localStorage.setItem('glpi_notifications_cache', JSON.stringify(notificationCache));
+        filterTicketsTable(); // Re-render visual tables once baseline is initialized
       }).catch(err => {
         console.error(`[NOTIFY] Erro ao buscar mensagens iniciais do chamado #${ticketId}:`, err);
       });
@@ -1537,6 +1562,9 @@ async function checkForTicketUpdates(tickets) {
                 title: `Atualização no Chamado #${ticketId}`,
                 body: `Assunto: ${ticket.name}\nNova mensagem recebida!`
               });
+              
+              // Mark the ticket as having unread messages
+              cached.unread = true;
             }
           }
 
@@ -1552,6 +1580,7 @@ async function checkForTicketUpdates(tickets) {
 
   if (cacheUpdated) {
     localStorage.setItem('glpi_notifications_cache', JSON.stringify(notificationCache));
+    filterTicketsTable(); // Force immediate visual table refresh to display/update unread indicator dots
   }
 }
 
