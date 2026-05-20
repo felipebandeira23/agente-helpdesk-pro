@@ -31,6 +31,11 @@
         <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
         Meus Chamados
       </button>
+      <button class="nav-btn" onclick="switchScreen('diagnostics')">
+        <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.3C.5 6.7.9 9.8 2.9 11.8c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.4-2.4c.4-.4.4-1.1 0-1.4z"/></svg>
+        Diagnóstico Técnico
+        <span id="diag-warning-badge" class="nav-warning-badge" style="display: none;"></span>
+      </button>
       <button class="nav-btn" onclick="switchScreen('telemetry')">
         <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H5v-2h5v2zm0-4H5v-2h5v2zm0-4H5V5h5v2zm9 8h-7v-2h7v2zm0-4h-7v-2h7v2zm0-4h-7V5h7v2z"/></svg>
         Telemetria
@@ -50,7 +55,7 @@
         <span id="agent-status-dot" class="status-dot loading"></span>
         <span id="agent-status-text">Conectando proxy...</span>
       </div>
-      <button class="btn-secondary" style="font-size: 11px; padding: 8px 12px; justify-content: center; gap: 6px;" onclick="forceInventorySync()">
+      <button id="btn-force-inventory-sync" class="btn-secondary" style="font-size: 11px; padding: 8px 12px; justify-content: center; gap: 6px;" onclick="forceInventorySync()">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;">
           <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
         </svg>
@@ -159,6 +164,35 @@
         </div>
       </section>
 
+      <!-- SCREEN: DIAGNOSTICS & SOLUTIONS -->
+      <section id="screen-diagnostics" class="screen">
+        <div class="diag-container">
+          <div id="diag-net-card" class="diag-card success">
+            <h3>Conectividade GLPI</h3>
+            <div id="diag-net-status" class="diag-card-value">Saudável</div>
+            <div id="diag-net-desc" class="diag-card-desc">Verificando latência com a central...</div>
+          </div>
+          <div id="diag-cpu-card" class="diag-card success">
+            <h3>Uso de CPU</h3>
+            <div id="diag-cpu-status" class="diag-card-value">Saudável</div>
+            <div id="diag-cpu-desc" class="diag-card-desc">Processamento local dentro da normalidade.</div>
+          </div>
+          <div id="diag-disk-card" class="diag-card success">
+            <h3>Espaço em Disco</h3>
+            <div id="diag-disk-status" class="diag-card-value">Saudável</div>
+            <div id="diag-disk-desc" class="diag-card-desc">Calculando espaço livre no volume principal C:...</div>
+          </div>
+        </div>
+
+        <div class="card faq-section">
+          <h3>💡 Base de Soluções Rápidas (FAQ)</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 13.5px;">Seu computador está enfrentando um problema comum? Tente estas resoluções rápidas antes de abrir um chamado técnico:</p>
+          <div id="solutions-faq-container" class="faq-grid">
+            <!-- Populated dynamically via dashboard.js -->
+          </div>
+        </div>
+      </section>
+
       <!-- SCREEN: NEW TICKET -->
       <section id="screen-new-ticket" class="screen">
         <div class="card">
@@ -199,6 +233,16 @@
                   <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
                   <span id="dropzone-text">Arraste e solte o arquivo aqui ou clique para selecionar</span>
                   <input type="file" id="ticket-file" style="display: none;" onchange="handleFileSelect(event)">
+                </div>
+              </div>
+
+              <div class="form-group full-width">
+                <label class="checklist-item" style="text-transform: none; font-size: 13px; font-weight: 500; color: var(--text-primary); letter-spacing: 0;">
+                  <input type="checkbox" id="ticket-attach-telemetry" checked style="margin-top: 0;">
+                  <span>Auto-anexar diagnóstico e especificações de hardware (CPU, RAM, Discos, Rede)</span>
+                </label>
+                <div id="recurring-incident-alert" class="recurring-alert" style="display: none;">
+                  <span class="alert-text"></span>
                 </div>
               </div>
 
@@ -373,7 +417,9 @@
           <div class="chat-window">
             <div class="chat-header">
               <h3>Interações com o Suporte</h3>
-              <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Timeline</span>
+              <button class="btn-secondary" style="font-size: 11px; padding: 6px 12px; gap: 4px;" onclick="generateChatMarkdownSummary()">
+                📄 Copiar Sumário do Chat
+              </button>
             </div>
             
             <div class="timeline" id="chat-timeline">
@@ -382,9 +428,19 @@
 
             <form class="chat-footer" id="chat-form" onsubmit="submitFollowup(event)">
               <div class="chat-input-wrapper">
-                <input type="text" id="chat-input-field" placeholder="Digite sua resposta para o técnico..." required autocomplete="off">
+                <div id="chat-file-indicator" style="display: none; padding: 6px 12px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass); font-size: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                  <span id="chat-file-name-text">arquivo.jpg</span>
+                  <button type="button" class="btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="removeChatFile()">Remover</button>
+                </div>
+                <div style="display: flex; align-items: center; width: 100%;">
+                  <button type="button" class="action-btn" style="width: 44px; height: 44px; border-radius: 10px 0 0 10px; border-right: none;" onclick="triggerChatFileInput()" title="Anexar arquivo">
+                    📎
+                  </button>
+                  <input type="text" id="chat-input-field" placeholder="Digite sua resposta para o técnico..." required autocomplete="off" style="border-radius: 0 10px 10px 0; height: 44px;">
+                  <input type="file" id="chat-file-input" style="display: none;" onchange="handleChatFileSelect(event)">
+                </div>
               </div>
-              <button type="submit" class="btn-primary" style="padding: 12px 20px;">Enviar</button>
+              <button type="submit" class="btn-primary" style="padding: 12px 20px; height: 44px;">Enviar</button>
             </form>
           </div>
         </div>
@@ -496,7 +552,7 @@
             </div>
 
             <div>
-              <button class="btn-primary" style="padding: 14px 28px; font-size: 14px;" id="btn-request-remote" onclick="requestRemoteSupport()">
+              <button class="btn-primary" style="padding: 14px 28px; font-size: 14px;" id="btn-request-remote" onclick="openRemoteChecklistModal()">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm8.57-5.07c-.17-.39-.55-.86-1.07-.86H15v-3c0-.55-.45-1-1-1h-6V8h2c.55 0 1-.45 1-1V5h2c1.13 0 2-.87 2-2 0-.29-.06-.56-.17-.81 3.51.92 6.17 4.1 6.17 7.93 0 1.57-.45 3.03-1.23 4.27z"/></svg>
                 Solicitar Acesso Remoto Agora
               </button>
@@ -577,6 +633,39 @@
               <span style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">Opcional. Se fornecido, permite que o agente baixe automaticamente o instalador pré-configurado do MeshAgent para este terminal.</span>
             </div>
 
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+              <label for="settings-update-channel">Canal de Atualização</label>
+              <select id="settings-update-channel" class="form-control">
+                <option value="stable">Canal Estável (Recomendado)</option>
+                <option value="beta">Canal Beta / Testes</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+              <label>Acessibilidade e Usabilidade</label>
+              <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border-glass); padding: 14px; border-radius: 8px; gap: 16px;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                  <span style="font-size: 13.5px; font-weight: 500;">Tamanho do Texto</span>
+                  <span style="font-size: 11px; color: var(--text-muted);">Redimensionar letras do agente</span>
+                </div>
+                <div class="font-scale-selector">
+                  <button type="button" class="font-scale-btn active" data-scale="standard" onclick="handleFontScaleChange('standard')">Normal</button>
+                  <button type="button" class="font-scale-btn" data-scale="medium" onclick="handleFontScaleChange('medium')">Médio</button>
+                  <button type="button" class="font-scale-btn" data-scale="large" onclick="handleFontScaleChange('large')">Grande</button>
+                </div>
+              </div>
+              
+              <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border-glass); padding: 14px; border-radius: 8px; gap: 16px; margin-top: 12px;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                  <span style="font-size: 13.5px; font-weight: 500;">Modo Compacto</span>
+                  <span style="font-size: 11px; color: var(--text-muted);">Layout denso para atendimento técnico</span>
+                </div>
+                <label class="checklist-item" style="margin-bottom: 0; padding-top: 0;">
+                  <input type="checkbox" id="setting-compact-mode" onchange="handleCompactModeChange(this.checked)" style="margin-top: 0;">
+                </label>
+              </div>
+            </div>
+
             <div style="display: flex; gap: 12px; margin-top: 10px; border-top: 1px solid var(--border-glass); padding-top: 20px;">
               <button type="submit" class="btn-primary" style="padding: 12px 24px; font-size: 13.5px;">Salvar Alterações</button>
               <button type="button" class="btn-secondary" onclick="testAllConnections()" style="padding: 12px 24px; font-size: 13.5px; display: flex; align-items: center; gap: 6px;">
@@ -622,6 +711,51 @@
 
   </main>
 
-  <script src="renderer.js"></script>
+  <!-- MODAL: REMOTE ACCESS CHECKLIST -->
+  <div id="remote-checklist-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+      <h3>🔒 Checklist de Segurança - Acesso Remoto</h3>
+      <p style="color: var(--text-secondary); font-size: 13.5px; line-height: 1.6;">Para sua segurança e privacidade, confirme se realizou as ações preventivas abaixo antes de liberar a visualização de tela:</p>
+      <div class="modal-checklist-list">
+        <label class="checklist-item">
+          <input type="checkbox" id="chk-save-work" onchange="evaluateRemoteChecklistProgress()">
+          <span>Salvei todos os arquivos abertos e trabalhos em andamento.</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" id="chk-close-private" onchange="evaluateRemoteChecklistProgress()">
+          <span>Fechei janelas do navegador contendo dados pessoais, senhas ou relatórios confidenciais.</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" id="chk-aware-cancel" onchange="evaluateRemoteChecklistProgress()">
+          <span>Estou ciente de que posso fechar o agente e encerrar a sessão remota a qualquer momento.</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" id="chk-authorize" onchange="evaluateRemoteChecklistProgress()">
+          <span>Autorizo a equipe de TI a se conectar e operar este computador temporariamente.</span>
+        </label>
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end;">
+        <button class="btn-secondary" onclick="closeRemoteChecklistModal()">Cancelar</button>
+        <button id="btn-confirm-remote-checklist" class="btn-primary" onclick="confirmRemoteChecklist()" disabled>Liberar Acesso</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CHANGELOG -->
+  <div id="changelog-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-box" style="max-width: 500px;">
+      <h3>🚀 Atualização Pronta (Versão <span id="changelog-version">--</span>)</h3>
+      <div style="background: rgba(255, 255, 255, 0.02); padding: 14px; border: 1px solid var(--border-glass); border-radius: 8px; font-size: 13px; max-height: 180px; overflow-y: auto; margin-bottom: 20px;">
+        <strong>Novidades da versão:</strong>
+        <pre id="changelog-details" style="font-family: var(--font-body); margin-top: 6px; white-space: pre-wrap; color: var(--text-secondary); line-height: 1.5;"></pre>
+      </div>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button class="btn-secondary" onclick="closeChangelogModal()">Adiar</button>
+        <button class="btn-primary" onclick="startUpdateWorkflow()">Instalar Agora</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="renderer.js"></script>
 </body>
 </html>

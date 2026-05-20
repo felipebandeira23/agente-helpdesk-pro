@@ -332,6 +332,71 @@ $output | ConvertTo-Json -Depth 5 -Compress
   });
 }
 
+/**
+ * Calculates CPU load over a short interval (e.g., 200ms) by taking two CPU samples.
+ * Returns a number between 0 and 100.
+ */
+function getCpuUsage() {
+  return new Promise((resolve) => {
+    const cpus1 = os.cpus();
+    if (!cpus1 || cpus1.length === 0) {
+      resolve(0);
+      return;
+    }
+    
+    setTimeout(() => {
+      const cpus2 = os.cpus();
+      if (!cpus2 || cpus2.length === 0) {
+        resolve(0);
+        return;
+      }
+      
+      let totalDiff = 0;
+      let idleDiff = 0;
+      
+      for (let i = 0; i < cpus1.length; i++) {
+        if (!cpus1[i] || !cpus2[i]) continue;
+        const t1 = cpus1[i].times;
+        const t2 = cpus2[i].times;
+        
+        const total1 = t1.user + t1.nice + t1.sys + t1.idle + t1.irq;
+        const total2 = t2.user + t2.nice + t2.sys + t2.idle + t2.irq;
+        
+        totalDiff += (total2 - total1);
+        idleDiff += (t2.idle - t1.idle);
+      }
+      
+      const usage = totalDiff === 0 ? 0 : 1 - (idleDiff / totalDiff);
+      resolve(Math.round(usage * 100));
+    }, 200);
+  });
+}
+
+/**
+ * Checks if the system is under heavy load (CPU usage > 80% or free RAM < 10%).
+ */
+async function isSystemUnderHeavyLoad() {
+  try {
+    const cpu = await getCpuUsage();
+    const freeRam = os.freemem();
+    const totalRam = os.totalmem();
+    const ramPercent = (freeRam / totalRam) * 100;
+    
+    const isHeavy = cpu > 80 || ramPercent < 10;
+    return {
+      isHeavy,
+      cpu,
+      freeRamMB: Math.round(freeRam / (1024 * 1024)),
+      ramPercent: Math.round(ramPercent)
+    };
+  } catch (e) {
+    // Graceful fallback
+    return { isHeavy: false, cpu: 0, freeRamMB: 1024, ramPercent: 50 };
+  }
+}
+
 module.exports = {
-  collectInventory
+  collectInventory,
+  isSystemUnderHeavyLoad
 };
+

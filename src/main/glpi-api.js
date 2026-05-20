@@ -9,10 +9,81 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const logger = require('./logger');
+const diagManager = require('./diagnostics-manager');
+
+let safeStorage;
+try {
+  const electron = require('electron');
+  safeStorage = electron.safeStorage;
+} catch (e) {
+  safeStorage = null;
+}
 
 // Importação lazy do axios para funcionar no Electron
 let axios;
 try { axios = require('axios'); } catch (e) { axios = null; }
+
+
+// Whitelist de domínios corporativos permitidos para GLPI e MeshCentral
+const DOMAIN_WHITELIST = [
+  '*.intranet.coppead.ufrj.br',
+  '*.coppead.ufrj.br',
+  '*.ufrj.br',
+  'localhost',
+  '127.0.0.1'
+];
+
+function isDomainAllowed(urlStr) {
+  if (!urlStr) return false;
+  try {
+    const parsed = new URL(urlStr);
+    const hostname = parsed.hostname.toLowerCase();
+    return DOMAIN_WHITELIST.some(pattern => {
+      if (pattern.startsWith('*.')) {
+        const domain = pattern.substring(2).toLowerCase();
+        return hostname === domain || hostname.endsWith('.' + domain);
+      }
+      return hostname === pattern.toLowerCase();
+    });
+  } catch (e) {
+    return false;
+  }
+}
+
+// Criptografia e Decriptografia de credenciais salvas em disco via safeStorage (DPAPI)
+function encryptToken(token) {
+  if (!token) return '';
+  if (token.startsWith('_safe:')) return token;
+  
+  if (safeStorage && safeStorage.isEncryptionAvailable()) {
+    try {
+      const encrypted = safeStorage.encryptString(token);
+      return '_safe:' + encrypted.toString('base64');
+    } catch (err) {
+      console.error('[GLPI-API] Erro ao criptografar token:', err.message);
+    }
+  }
+  return token;
+}
+
+function decryptToken(token) {
+  if (!token) return '';
+  if (token.startsWith('_safe:')) {
+    const base64Str = token.substring(6);
+    if (safeStorage && safeStorage.isEncryptionAvailable()) {
+      try {
+        const buffer = Buffer.from(base64Str, 'base64');
+        return safeStorage.decryptString(buffer);
+      } catch (err) {
+        console.error('[GLPI-API] Erro ao descriptografar token:', err.message);
+      }
+    }
+    console.warn('[GLPI-API] safeStorage indisponível para descriptografar token.');
+    return '';
+  }
+  return token;
+}
 
 // ─── Configuração persistida ───────────────────────────────────────────────
 // Usa userdata do Electron se disponível, senão pasta do usuário do OS
@@ -85,14 +156,56 @@ function loadConfig() {
     const cfgPath = getConfigPath();
     if (fs.existsSync(cfgPath)) {
       const parsed = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
-      if (parsed.glpiUrl) merged.glpiUrl = parsed.glpiUrl;
-      if (parsed.appToken) merged.appToken = parsed.appToken;
-      if (parsed.userToken !== undefined) merged.userToken = parsed.userToken;
-      if (parsed.meshUrl) merged.meshUrl = parsed.meshUrl;
+      
+      let needsEncryption = false;
+      
+      if (parsed.glpiUrl) {
+        if (isDomainAllowed(parsed.glpiUrl)) {
+          merged.glpiUrl = parsed.glpiUrl;
+        } else {
+          console.warn('[GLPI-API] URL do GLPI bloqueada por não pertencer aos domínios permitidos:', parsed.glpiUrl);
+        }
+      }
+      
+      if (parsed.appToken) {
+        if (parsed.appToken.startsWith('_safe:')) {
+          merged.appToken = decryptToken(parsed.appToken);
+        } else {
+          merged.appToken = parsed.appToken;
+          needsEncryption = true;
+        }
+      }
+      
+      if (parsed.userToken !== undefined) {
+        if (parsed.userToken.startsWith('_safe:')) {
+          merged.userToken = decryptToken(parsed.userToken);
+        } else if (parsed.userToken) {
+          merged.userToken = parsed.userToken;
+          needsEncryption = true;
+        } else {
+          merged.userToken = parsed.userToken;
+        }
+      }
+      
+      if (parsed.meshUrl) {
+        if (isDomainAllowed(parsed.meshUrl)) {
+          merged.meshUrl = parsed.meshUrl;
+        } else {
+          console.warn('[GLPI-API] URL do MeshCentral bloqueada por não pertencer aos domínios permitidos:', parsed.meshUrl);
+        }
+      }
+      
       if (parsed.meshGroupId !== undefined) merged.meshGroupId = parsed.meshGroupId;
       if (parsed.sessionToken !== undefined) merged.sessionToken = parsed.sessionToken;
       if (parsed.sessionExpiry !== undefined) merged.sessionExpiry = parsed.sessionExpiry;
+      
       console.log('[GLPI-API] Configurações locais carregadas com sucesso de:', cfgPath);
+      
+      // Se detectou tokens em texto plano, salva de forma criptografada
+      if (needsEncryption && safeStorage && safeStorage.isEncryptionAvailable()) {
+        console.log('[GLPI-API] Criptografando credenciais salvas no disco...');
+        saveConfig(merged);
+      }
     }
   } catch (e) {
     console.error('[GLPI-API] Erro ao ler glpi-config.json:', e.message);
@@ -101,13 +214,78 @@ function loadConfig() {
   return merged;
 }
 
+function getCachePath(filename) {
+  try {
+    const { app } = require('electron');
+    return path.join(app.getPath('userData'), filename);
+  } catch (e) {
+    return path.join(os.homedir(), '.helpdesk-pro', filename);
+  }
+}
+
+function isInventoryEqual(inv1, inv2) {
+  if (!inv1 || !inv2) return false;
+  try {
+    const h1 = inv1.hardware || {};
+    const h2 = inv2.hardware || {};
+    if (h1.uuid !== h2.uuid || h1.name !== h2.name || h1.model !== h2.model || h1.memory !== h2.memory) {
+      return false;
+    }
+    const b1 = inv1.bios || {};
+    const b2 = inv2.bios || {};
+    if (b1.ssn !== b2.ssn || b1.msn !== b2.msn) {
+      return false;
+    }
+    const o1 = inv1.operatingsystem || {};
+    const o2 = inv2.operatingsystem || {};
+    if (o1.name !== o2.name || o1.version !== o2.version) {
+      return false;
+    }
+    if ((inv1.cpus || []).length !== (inv2.cpus || []).length) return false;
+    if ((inv1.memories || []).length !== (inv2.memories || []).length) return false;
+    if ((inv1.storages || []).length !== (inv2.storages || []).length) return false;
+    if ((inv1.networks || []).length !== (inv2.networks || []).length) return false;
+    if ((inv1.softwares || []).length !== (inv2.softwares || []).length) return false;
+    
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function createFriendlyError(err, contextMsg) {
+  let friendlyMsg = contextMsg;
+  if (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED') {
+    friendlyMsg += ': Servidor inacessível ou sem conexão com a intranet COPPEAD.';
+  } else if (err.response) {
+    friendlyMsg += `: Servidor retornou código HTTP ${err.response.status}`;
+  } else {
+    friendlyMsg += `: ${err.message}`;
+  }
+  const errorObj = new Error(friendlyMsg);
+  errorObj.messageFriendly = friendlyMsg;
+  errorObj.originalError = err;
+  return errorObj;
+}
+
+
 function saveConfig(cfg) {
   try {
     const cfgPath = getConfigPath();
     const dir = path.dirname(cfgPath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
-  } catch (e) {}
+    
+    // Cria uma cópia com os tokens criptografados para salvar no disco
+    const secureCfg = {
+      ...cfg,
+      appToken: encryptToken(cfg.appToken),
+      userToken: encryptToken(cfg.userToken)
+    };
+    
+    fs.writeFileSync(cfgPath, JSON.stringify(secureCfg, null, 2));
+  } catch (e) {
+    console.error('[GLPI-API] Erro ao salvar glpi-config.json:', e.message);
+  }
 }
 
 
@@ -124,8 +302,22 @@ function buildClient() {
   if (fs.existsSync(caPath)) {
     opts.httpsAgent = new https.Agent({ ca: fs.readFileSync(caPath) });
   } else {
-    // Na intranet, aceitar cert interno sem verificação de CA extra
-    opts.httpsAgent = new https.Agent({ rejectUnauthorized: false });
+    let rejectUnauthorized = true;
+    
+    // Em desenvolvimento (fora de produção) ou se for um servidor de testes localhost,
+    // podemos aceitar TLS inválido de forma facilitada para o desenvolvedor.
+    // Em produção (app.isPackaged === true), a validação de TLS é obrigatória e estrita.
+    try {
+      const { app } = require('electron');
+      if (app && !app.isPackaged) {
+        rejectUnauthorized = false;
+      }
+    } catch (err) {
+      // Fora do Electron (ex: scripts Node simples), desabilita rejectUnauthorized apenas para testes locais
+      rejectUnauthorized = false;
+    }
+    
+    opts.httpsAgent = new https.Agent({ rejectUnauthorized });
   }
 
   const client = axios.create(opts);
@@ -322,7 +514,13 @@ async function associateComputerToTicket(ticketId, computerId) {
 
 async function createTicket({ title, description, categoryId, urgency = 3, userId, hostname, ip, osVersion }) {
   const client = buildClient();
-  const headers = await authHeaders();
+  let headers;
+  try {
+    headers = await authHeaders();
+  } catch (e) {
+    logger.error('Erro de autenticação ao tentar criar ticket', e, 'GLPI-API');
+    throw createFriendlyError(e, 'Erro de autenticação com o GLPI. Verifique as credenciais.');
+  }
 
   // Monta descrição enriquecida com dados da máquina
   const enrichedDesc = [
@@ -347,22 +545,32 @@ async function createTicket({ title, description, categoryId, urgency = 3, userI
     },
   };
 
-  const res = await client.post(`${_config.glpiUrl}/apirest.php/Ticket`, payload, { headers });
-  
-  // Associa automaticamente o computador local ao chamado recém-criado
-  try {
-    const compId = await findLocalComputerId();
-    if (compId) {
-      console.log(`[GLPI-API] Associando computador local (ID: ${compId}) ao chamado criado #${res.data.id}...`);
-      await associateComputerToTicket(res.data.id, compId);
-    } else {
-      console.log('[GLPI-API] Computador local não encontrado no GLPI para associação.');
-    }
-  } catch (assocErr) {
-    console.error('[GLPI-API] Erro ao associar computador ao chamado criado:', assocErr.message);
-  }
+  const url = `${_config.glpiUrl}/apirest.php/Ticket`;
+  logger.info(`Abrindo chamado técnico: "${title}"`, 'GLPI-API');
 
-  return res.data; // { id, message }
+  try {
+    const res = await client.post(url, payload, { headers });
+    const ticketId = res.data.id;
+    logger.info(`Chamado #${ticketId} criado com sucesso no GLPI!`, 'GLPI-API');
+    
+    // Associa automaticamente o computador local ao chamado recém-criado
+    try {
+      const compId = await findLocalComputerId();
+      if (compId) {
+        logger.info(`Associando computador local (ID: ${compId}) ao chamado criado #${ticketId}...`, 'GLPI-API');
+        await associateComputerToTicket(ticketId, compId);
+      } else {
+        logger.warn('Computador local não encontrado no GLPI para associação.', 'GLPI-API');
+      }
+    } catch (assocErr) {
+      logger.error('Erro ao associar computador ao chamado criado', assocErr, 'GLPI-API');
+    }
+
+    return res.data;
+  } catch (e) {
+    logger.error('Falha ao abrir chamado no GLPI', e, 'GLPI-API');
+    throw createFriendlyError(e, 'Falha ao criar o chamado no GLPI.');
+  }
 }
 
 /**
@@ -449,6 +657,14 @@ async function addFollowup(ticketId, message) {
  * Salva as configurações de conexão com o GLPI
  */
 function setGlpiConfig({ glpiUrl, appToken, userToken, meshUrl, meshGroupId }) {
+  // Validar se as URLs fornecidas pertencem aos domínios autorizados pela política de segurança
+  if (glpiUrl && !isDomainAllowed(glpiUrl)) {
+    return { ok: false, message: 'URL do GLPI rejeitada pela política de segurança da rede COPPEAD.' };
+  }
+  if (meshUrl && !isDomainAllowed(meshUrl)) {
+    return { ok: false, message: 'URL do MeshCentral rejeitada pela política de segurança da rede COPPEAD.' };
+  }
+
   _config = {
     ..._config,
     glpiUrl: glpiUrl ? glpiUrl.replace(/\/$/, '') : _config.glpiUrl,
@@ -476,9 +692,6 @@ function getGlpiConfig() {
   };
 }
 
-/**
- * Testa a conexão com o GLPI e retorna informações básicas
- */
 async function testConnection() {
   try {
     await killSession(); // força nova sessão
@@ -486,6 +699,8 @@ async function testConnection() {
     const client = buildClient();
     const headers = await authHeaders();
     const res = await client.get(`${_config.glpiUrl}/apirest.php/getMyProfiles`, { headers });
+    logger.info('Teste de conexão com o GLPI bem-sucedido!', 'GLPI-API');
+    diagManager.updateGlpiStatus('connected');
     return { ok: true, message: 'Conexão com GLPI bem-sucedida! (Sessão de usuário inicializada)', profiles: res.data };
   } catch (e) {
     let msg = e.message;
@@ -493,6 +708,8 @@ async function testConnection() {
       const data = e.response.data;
       // ERROR_LOGIN_PARAMETERS_MISSING means the server is online and App-Token is valid
       if (Array.isArray(data) && data.includes('ERROR_LOGIN_PARAMETERS_MISSING')) {
+        logger.info('Teste de conexão com o GLPI bem-sucedido (App-Token aceito)!', 'GLPI-API');
+        diagManager.updateGlpiStatus('connected');
         return { ok: true, message: 'Conexão com GLPI bem-sucedida! (Servidor alcançado e App-Token aceito)' };
       }
       if (Array.isArray(data) && data[1]) {
@@ -501,6 +718,8 @@ async function testConnection() {
         msg = data.message;
       }
     }
+    logger.error('Falha no teste de conexão com o GLPI', e, 'GLPI-API');
+    diagManager.updateGlpiStatus('error');
     return { ok: false, message: msg };
   }
 }
@@ -508,10 +727,31 @@ async function testConnection() {
 /**
  * Envia o inventário JSON nativo para o GLPI via endpoint /front/inventory.php
  * @param {Object} inventoryData - Objeto de inventário coletado
+ * @param {string} type - Tipo de envio ('auto' ou 'force')
  */
-async function sendInventory(inventoryData) {
+async function sendInventory(inventoryData, type = 'auto') {
   if (!_config.glpiUrl) {
-    throw new Error('GLPI não configurado. Configure a URL nas Configurações.');
+    const err = new Error('GLPI não configurado. Configure a URL nas Configurações.');
+    err.messageFriendly = err.message;
+    throw err;
+  }
+
+  const cacheFile = getCachePath('last-sent-inventory.json');
+  const offlineFile = getCachePath('offline-inventory.json');
+
+  // 1. Delta Sync check (se não for envio forçado)
+  if (type === 'auto' && fs.existsSync(cacheFile)) {
+    try {
+      const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      if (isInventoryEqual(inventoryData, cached)) {
+        logger.info('Sincronização de inventário pulada: Nenhuma alteração estrutural detectada (Delta zero).', 'INVENTORY');
+        diagManager.updateGlpiStatus('connected');
+        diagManager.registerSyncSuccess('auto', 'Sincronização pulada (Delta zero - Sem alterações)');
+        return { success: true, skipped: true, message: 'Nenhuma alteração estrutural detectada.' };
+      }
+    } catch (e) {
+      logger.warn('Falha ao comparar inventário com cache local: ' + e.message, 'INVENTORY');
+    }
   }
 
   const client = buildClient();
@@ -574,6 +814,43 @@ async function getLocations() {
   return Array.isArray(res.data) ? res.data : [];
 }
 
+async function uploadDocument(ticketId, filePath, fileName) {
+  const client = buildClient();
+  const headers = await authHeaders();
+  
+  const formData = new FormData();
+  formData.append('uploadManifest', JSON.stringify({
+    input: {
+      name: fileName,
+      itemtype: 'Ticket',
+      items_id: parseInt(ticketId)
+    }
+  }));
+  
+  const fileBuffer = fs.readFileSync(filePath);
+  const fileBlob = new Blob([fileBuffer]);
+  formData.append('filename[0]', fileBlob, fileName);
+
+  const reqHeaders = { ...headers };
+  delete reqHeaders['Content-Type'];
+
+  const res = await client.post(`${_config.glpiUrl}/apirest.php/Document`, formData, {
+    headers: reqHeaders
+  });
+  return res.data;
+}
+
+async function getTicketDocuments(ticketId) {
+  const client = buildClient();
+  const headers = await authHeaders();
+  try {
+    const res = await client.get(`${_config.glpiUrl}/apirest.php/Ticket/${ticketId}/Document`, { headers });
+    return Array.isArray(res.data) ? res.data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
 module.exports = {
   // Config
   setGlpiConfig,
@@ -599,4 +876,8 @@ module.exports = {
   getLocations,
   // Inventory
   sendInventory,
+  // Documents
+  uploadDocument,
+  getTicketDocuments
 };
+
