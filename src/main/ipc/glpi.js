@@ -4,7 +4,7 @@
 
 const { ipcMain, BrowserWindow } = require('electron');
 const glpiApi = require('../glpi-api');
-const { collectInventory } = require('../services/inventory-collector');
+const { collectInventory } = require('../inventory-collector');
 const logger = require('../logger');
 const os = require('os');
 
