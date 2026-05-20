@@ -25,13 +25,34 @@ function isValidExternalUrl(urlStr) {
     }
     const hostname = parsed.hostname.toLowerCase();
     
-    return DOMAIN_WHITELIST.some(pattern => {
+    // Check main static whitelist
+    const isWhitelisted = DOMAIN_WHITELIST.some(pattern => {
       if (pattern.startsWith('*.')) {
         const domain = pattern.substring(2).toLowerCase();
         return hostname === domain || hostname.endsWith('.' + domain);
       }
       return hostname === pattern.toLowerCase();
     });
+    if (isWhitelisted) return true;
+
+    // Dynamically check custom configured servers
+    const glpiApi = require('../glpi-api');
+    const glpiConfig = glpiApi.getGlpiConfig();
+    if (glpiConfig) {
+      if (glpiConfig.glpiUrl) {
+        try {
+          const glpiParsed = new URL(glpiConfig.glpiUrl);
+          if (hostname === glpiParsed.hostname.toLowerCase()) return true;
+        } catch (e) {}
+      }
+      if (glpiConfig.meshUrl) {
+        try {
+          const meshParsed = new URL(glpiConfig.meshUrl);
+          if (hostname === meshParsed.hostname.toLowerCase()) return true;
+        } catch (e) {}
+      }
+    }
+    return false;
   } catch (e) {
     return false;
   }

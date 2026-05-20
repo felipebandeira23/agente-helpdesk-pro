@@ -3,13 +3,11 @@ const conn = new Client();
 const PASS = 'liplip22';
 
 conn.on('ready', () => {
-  console.log('Verificando se a porta 4430 está ouvindo...\n');
+  console.log('Running diagnostics on remote server...\n');
 
   const cmd = `
-ss -tlnp | grep -E '4430|8080' || echo "Portas não encontradas"
-echo "=== LOGS DO MESHCENTRAL ==="
-echo '${PASS}' | sudo -S journalctl -u meshcentral -n 25 --no-pager
-`;
+    openssl verify -CAfile /etc/ssl/CA/ca-cert.pem /etc/ssl/certs/glpi.crt
+  `;
 
   conn.exec(cmd, (err, stream) => {
     if (err) { console.error('Erro:', err); conn.end(); process.exit(1); }

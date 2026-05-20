@@ -129,9 +129,9 @@ function registerGlpiIPCHandlers() {
   });
 
   // Anexos (Documentos)
-  ipcMain.handle('glpi-upload-document', async (event, { ticketId, filePath, fileName }) => {
+  ipcMain.handle('glpi-upload-document', async (event, { ticketId, fileName, buffer }) => {
     try {
-      return await glpiApi.uploadDocument(ticketId, filePath, fileName);
+      return await glpiApi.uploadDocument(ticketId, fileName, buffer);
     } catch (e) {
       logger.error('Erro ao fazer upload de anexo no ticket #' + ticketId, e, 'IPC-GLPI');
       return { error: e.message };

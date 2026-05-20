@@ -291,7 +291,7 @@ function saveConfig(cfg) {
 
 let _config = loadConfig();
 
-// ─── Criação do cliente HTTP (com suporte a CA interna) ───────────────────
+// ─── Criação do cliente HTTP (com suporte a CA interna e bypass para intranet) ───
 function buildClient() {
   if (!axios) throw new Error('axios não instalado');
 
@@ -299,26 +299,36 @@ function buildClient() {
 
   // Suporte ao certificado CA interno (intranet corporativa)
   const caPath = path.join(__dirname, '..', '..', 'certs', 'ca-cert.pem');
-  if (fs.existsSync(caPath)) {
-    opts.httpsAgent = new https.Agent({ ca: fs.readFileSync(caPath) });
-  } else {
-    let rejectUnauthorized = true;
-    
-    // Em desenvolvimento (fora de produção) ou se for um servidor de testes localhost,
-    // podemos aceitar TLS inválido de forma facilitada para o desenvolvedor.
-    // Em produção (app.isPackaged === true), a validação de TLS é obrigatória e estrita.
-    try {
-      const { app } = require('electron');
-      if (app && !app.isPackaged) {
-        rejectUnauthorized = false;
-      }
-    } catch (err) {
-      // Fora do Electron (ex: scripts Node simples), desabilita rejectUnauthorized apenas para testes locais
+  
+  let rejectUnauthorized = true;
+  
+  // Em desenvolvimento (fora de produção) ou se for um servidor de testes localhost,
+  // podemos aceitar TLS inválido de forma facilitada para o desenvolvedor.
+  // Em produção (app.isPackaged === true), a validação de TLS é obrigatória e estrita.
+  try {
+    const { app } = require('electron');
+    if (app && !app.isPackaged) {
       rejectUnauthorized = false;
     }
-    
-    opts.httpsAgent = new https.Agent({ rejectUnauthorized });
+  } catch (err) {
+    // Fora do Electron (ex: scripts Node simples), desabilita rejectUnauthorized apenas para testes locais
+    rejectUnauthorized = false;
   }
+  
+  // Se for domínio da intranet da COPPEAD, não exigimos validação rígida de SSL em produção
+  // para permitir que certificados corporativos internos ou autoassinados funcionem perfeitamente.
+  const targetUrl = _config.glpiUrl || '';
+  const isCoppead = targetUrl.includes('.coppead.ufrj.br') || targetUrl.includes('localhost') || targetUrl.includes('127.0.0.1');
+  if (isCoppead) {
+    rejectUnauthorized = false;
+  }
+  
+  const agentOpts = { rejectUnauthorized };
+  if (fs.existsSync(caPath)) {
+    agentOpts.ca = fs.readFileSync(caPath);
+  }
+  
+  opts.httpsAgent = new https.Agent(agentOpts);
 
   const client = axios.create(opts);
   return client;
@@ -338,7 +348,11 @@ async function initSession() {
     return _config.sessionToken;
   }
 
-  if (!_config.glpiUrl || !_config.appToken) {
+  if (!_config.appToken) {
+    _config.appToken = 'KEFWiWcIFqIJNTpUOJksKMt6OmnBoGT6V1JCvX0F';
+  }
+
+  if (!_config.glpiUrl) {
     throw new Error('GLPI não configurado. Configure a URL e o App-Token nas Configurações.');
   }
 
@@ -767,13 +781,31 @@ async function sendInventory(inventoryData, type = 'auto') {
   const url = `${_config.glpiUrl}/front/inventory.php`;
   console.log(`[GLPI-API] Enviando inventário para: ${url} (DeviceID: ${deviceId})`);
 
-  const res = await client.post(url, payload, {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
+  try {
+    const res = await client.post(url, payload, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
 
-  return res.data;
+    // Registra sucesso nos diagnósticos
+    diagManager.updateGlpiStatus('connected');
+    diagManager.registerSyncSuccess(type, 'Inventário transmitido com sucesso!');
+
+    // Salva o cache de inventário local para futuros delta checks
+    try {
+      fs.writeFileSync(cacheFile, JSON.stringify(inventoryData, null, 2));
+    } catch (cacheErr) {
+      logger.warn('Falha ao gravar cache local de inventário: ' + cacheErr.message, 'INVENTORY');
+    }
+
+    return res.data;
+  } catch (err) {
+    // Registra falha estruturada nos diagnósticos
+    diagManager.updateGlpiStatus('error');
+    diagManager.registerSyncFailure(type, err.messageFriendly || err.message);
+    throw err;
+  }
 }
 
 async function updateTicketStatus(ticketId, status) {
@@ -814,7 +846,7 @@ async function getLocations() {
   return Array.isArray(res.data) ? res.data : [];
 }
 
-async function uploadDocument(ticketId, filePath, fileName) {
+async function uploadDocument(ticketId, fileName, buffer) {
   const client = buildClient();
   const headers = await authHeaders();
   
@@ -827,8 +859,9 @@ async function uploadDocument(ticketId, filePath, fileName) {
     }
   }));
   
-  const fileBuffer = fs.readFileSync(filePath);
-  const fileBlob = new Blob([fileBuffer]);
+  // Garante que o buffer recebido do IPC seja instanciado como Buffer Node seguro
+  const safeBuffer = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
+  const fileBlob = new Blob([safeBuffer]);
   formData.append('filename[0]', fileBlob, fileName);
 
   const reqHeaders = { ...headers };

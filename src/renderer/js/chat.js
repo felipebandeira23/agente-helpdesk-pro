@@ -329,8 +329,8 @@ export async function submitFollowup(event) {
       if (fileToUpload) {
         try {
           const arrayBuffer = await fileToUpload.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
-          const uploadRes = await window.electronAPI.glpiUploadDocument(State.activeTicketId, fileToUpload.name, buffer);
+          const uint8Array = new Uint8Array(arrayBuffer);
+          const uploadRes = await window.electronAPI.glpiUploadDocument(State.activeTicketId, fileToUpload.name, uint8Array);
           if (uploadRes && uploadRes.id) {
             success = true;
           }

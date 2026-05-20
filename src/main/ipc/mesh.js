@@ -1,25 +1,28 @@
-/**
- * ipc/mesh.js — Handlers IPC para integração e controle do MeshAgent/MeshCentral
- */
-
 const { ipcMain, app } = require('electron');
-const meshInstaller = require('../services/mesh-installer');
+const meshRunner = require('../services/mesh-runner');
 const { isValidExternalUrl } = require('./system');
 const logger = require('../logger');
 const https = require('https');
 
 function registerMeshIPCHandlers() {
-  // Check if service is Running/Stopped/NotInstalled
-  ipcMain.handle('check-mesh-agent', async () => {
+  ipcMain.handle('mesh-start', async () => {
     try {
-      return await meshInstaller.checkMeshAgentStatus();
-    } catch (e) {
-      logger.error('Falha ao checar status do MeshAgent', e, 'IPC-MESH');
-      return 'NotInstalled';
+      await meshRunner.startMeshAgent();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
     }
   });
 
-  // Test connection supporting HTTP/HTTPS and corporate CA or fallback bypass for intranet
+  ipcMain.handle('mesh-stop', async () => {
+    const killed = meshRunner.stopMeshAgent();
+    return { success: killed };
+  });
+
+  ipcMain.handle('mesh-status', async () => {
+    return meshRunner.getMeshAgentStatus();
+  });
+
   ipcMain.handle('test-mesh-connection', async (event, meshUrl) => {
     return new Promise((resolve) => {
       if (!meshUrl) {

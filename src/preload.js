@@ -30,6 +30,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   glpiUpdateTicket:    (ticketId, fields) => ipcRenderer.invoke('glpi-update-ticket', { ticketId, fields }),
   glpiGetLocations:    () => ipcRenderer.invoke('glpi-get-locations'),
   glpiGetUserRole:     () => ipcRenderer.invoke('glpi-get-user-role'),
+  glpiUploadDocument:  (ticketId, fileName, buffer) => ipcRenderer.invoke('glpi-upload-document', { ticketId, fileName, buffer }),
+  glpiGetDocuments:    (ticketId) => ipcRenderer.invoke('glpi-get-documents', ticketId),
 
 
   // GLPI — Usuário
@@ -37,6 +39,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // MeshCentral
   checkMeshAgent:      () => ipcRenderer.invoke('check-mesh-agent'),
+  meshStart:           () => ipcRenderer.invoke('mesh-start'),
+  meshStop:            () => ipcRenderer.invoke('mesh-stop'),
+  meshStatus:          () => ipcRenderer.invoke('mesh-status'),
   testMeshConnection:  (url) => ipcRenderer.invoke('test-mesh-connection', url),
 
   // Atualizações Automatizadas
@@ -47,6 +52,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const subscription = (event, progress) => callback(progress);
     ipcRenderer.on('update-progress', subscription);
     return () => ipcRenderer.removeListener('update-progress', subscription);
+  },
+  onWindowFocusChanged: (callback) => {
+    const subscription = (event, focused) => callback(focused);
+    ipcRenderer.on('window-focus-changed', subscription);
+    return () => ipcRenderer.removeListener('window-focus-changed', subscription);
   }
 });
 

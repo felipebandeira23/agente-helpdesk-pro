@@ -1,99 +1,130 @@
 # Agente Helpdesk Pro
 
-> Uma central de atendimento técnica e suporte remoto de última geração, integrada nativamente com o GLPI Agent e MeshCentral, trazendo uma interface moderna com suporte a múltiplos temas.
+<div align="center">
+  <img src="assets/icon.png" width="120" alt="Agente Helpdesk Pro Logo" />
+  <h3>Agente Helpdesk Pro — COPPEAD/UFRJ</h3>
+  <p>Suporte técnico inteligente com inventário automático e acesso remoto seguro</p>
+</div>
 
 ---
 
-## 🌟 Visão Geral
+## 📋 Visão Geral
 
-O **Agente Helpdesk Pro** é uma aplicação desktop desenvolvida em **Electron** e **Vanilla CSS/JS** de alto desempenho. Ele atua como um companheiro inteligente de suporte para o usuário final, substituindo soluções legadas e oferecendo uma ponte segura entre a máquina do cliente, o proxy local do **GLPI Agent** (via Perl na porta 62354) e sessões remotas assistidas do **MeshCentral**.
+O **Agente Helpdesk Pro** é uma aplicação desktop para Windows desenvolvida para o Setor de TI do COPPEAD/UFRJ. Ela integra o GLPI (abertura de chamados), coleta automática de inventário de hardware/software e acesso remoto criptografado via MeshCentral.
 
-A aplicação foi desenhada sob rígidos padrões de estética moderna, empregando o conceito de **Glassmorphism**, transições suaves e adaptabilidade total entre os modos de cor Escuro e Claro.
+## ✨ Funcionalidades
 
----
+| Funcionalidade | Descrição |
+|---|---|
+| 🎫 **Abrir Chamados** | Interface simplificada para criar chamados no GLPI |
+| 📊 **Inventário Automático** | Coleta e sincroniza hardware/software com o GLPI |
+| 🖥️ **Acesso Remoto** | Suporte remoto criptografado via MeshCentral (LGPD compliant) |
+| 🔔 **Notificações** | Alertas sobre chamados e atualizações em tempo real |
+| 📈 **Telemetria** | Diagnóstico técnico do dispositivo |
+| 🌙 **Tema Escuro/Claro** | Interface moderna adaptável |
 
-## ✨ Principais Funcionalidades
+## 🖥️ Requisitos do Sistema
 
-*   **📊 Dashboard Central:** Visualização rápida com chamados recentes, monitoramento rápido de recursos e painel de status do agente.
-*   **🎫 Abertura de Chamados Simplificada:** Envio direto de incidentes para o GLPI, incluindo classificação inteligente de categorias, seleção de urgência e anexo de arquivos/capturas de tela por zona de arrastar e soltar (drag & drop).
-*   **💬 Timeline de Conversação (Chat):** Linha do tempo interativa e atualizada automaticamente para troca de mensagens e feedback em tempo real com o técnico encarregado do chamado.
-*   **💻 Telemetria Completa de Hardware (PowerShell Seguro):** Coleta nativa e segura através de consultas `CIM/WMI` que mostram fabricante da placa-mãe, número de série da BIOS, fabricante, modelo, IP interno/externo, CPU e memória.
-*   **📈 Gráficos de Desempenho em Tempo Real:** Gráficos interativos gerados via **Chart.js** exibindo oscilações de CPU e uso de memória RAM.
-*   **🛡️ Suporte Remoto MeshCentral:** Consentimento de compartilhamento de tela com visualizador de logs seguro, gerando conformidade de segurança e controle manual.
-*   **🌓 Alternador de Temas (Claro / Escuro):** Suporte nativo a Tema Claro projetado com paletas de cores de alto contraste que cumprem regras de acessibilidade e legibilidade visual, com persistência automática no sistema via `localStorage`.
+- **Sistema Operacional:** Windows 10 (64-bit) ou superior
+- **Processador:** x64 (Intel ou AMD)
+- **RAM:** 4GB mínimo
+- **Disco:** 500MB livre
+- **Rede:** Acesso à intranet COPPEAD (chamados.intranet.coppead.ufrj.br)
+- **Privilégios:** Administrador local (para instalação)
 
----
+## 🚀 Instalação
 
-## 📂 Estrutura do Projeto
+### Para usuários finais
 
-A arquitetura do projeto é enxuta e modular:
+1. Baixe o instalador `AgentHelpdeskPro-Setup-1.0.0.exe` disponibilizado pelo Setor de TI
+2. Execute o instalador **como Administrador** (clique direito → "Executar como administrador")
+3. Siga as instruções na tela
+4. O agente inicia automaticamente após a instalação
 
-```text
-agente-helpdesk-pro/
-├── assets/                  # Ativos estáticos (Ícones, Logos e Imagens)
-├── src/
-│   ├── main.js              # Processo principal (IPC, Ciclo de Vida, Chamadas PowerShell)
-│   ├── preload.js           # Ponte de segurança isolada (ContextBridge)
-│   └── renderer/
-│       ├── index.html       # Estrutura HTML5 semântica e responsiva
-│       ├── style.css        # Estilos, Grid Responsivo, Efeitos de Vidro e Temas
-│       └── renderer.js      # Manipulação de DOM, requisições de API, gráficos e eventos
-├── package.json             # Dependências (Electron, Chart.js, Axios) e scripts de build
-└── README.md                # Este documento descritivo
+### Para administradores de TI (silencioso)
+
+```powershell
+# Instalação silenciosa — ideal para GPO ou SCCM
+AgentHelpdeskPro-Setup-1.0.0.exe /S
 ```
 
----
-
-## 🛠️ Tecnologias Utilizadas
-
-*   **Electron:** Para empacotamento desktop multiplataforma nativo.
-*   **HTML5 / Vanilla CSS:** Design customizado robusto, sem dependência de frameworks externos de CSS como Tailwind, garantindo carregamento instantâneo.
-*   **Chart.js:** Biblioteca de renderização gráfica leve para gráficos lineares e donut.
-*   **PowerShell Pipeline:** Integração nativa para extração de telemetria sem expor chaves inseguras.
-
----
-
-## 🚀 Como Executar
+## 🛠️ Desenvolvimento
 
 ### Pré-requisitos
-Certifique-se de ter o [Node.js](https://nodejs.org/) instalado na máquina (versão 16+ recomendada).
 
-### Instalação
+```bash
+node >= 18
+npm >= 9
+```
 
-1. Acesse o diretório do projeto:
-   ```powershell
-   cd "agente-helpdesk-pro"
-   ```
+### Instalação das dependências
 
-2. Instale as dependências necessárias:
-   ```powershell
-   npm install
-   ```
+```bash
+npm install
+```
 
-### Executando em Modo Desenvolvimento
+### Executar em modo de desenvolvimento
 
-Inicie a aplicação utilizando o script start:
-```powershell
+```bash
 npm start
 ```
 
-*Nota: Para rodar a partir da raiz do repositório pai, você pode utilizar:*
-```powershell
-npm start --prefix agente-helpdesk-pro
-```
+### Gerar instalador
 
----
-
-## 📦 Empacotamento para Produção
-
-Para criar o instalador `.exe` nativo de produção otimizado para Windows, execute:
-```powershell
+```bash
+# Instalador NSIS (.exe)
 npm run dist
+
+# Versão portátil
+npm run dist:portable
+
+# Ambos
+npm run dist:all
 ```
-O instalador compilado e portátil será gerado automaticamente na pasta `dist/`.
+
+O instalador será gerado em `dist/`.
+
+## 📁 Estrutura do Projeto
+
+```
+agente-helpdesk-pro/
+├── assets/               # Executáveis e ícones
+│   ├── meshagent64.exe   # MeshAgent COPPEAD (acesso remoto)
+│   └── icon.ico / icon.png
+├── build/                # Recursos do instalador NSIS
+│   └── installer.nsh     # Script NSIS customizado
+├── certs/                # Certificados SSL da intranet
+├── src/
+│   ├── main.js           # Entry point Electron (Main Process)
+│   ├── preload.js        # Bridge segura Main↔Renderer
+│   ├── main/
+│   │   ├── services/     # mesh-runner, scheduler, etc.
+│   │   ├── ipc/          # Handlers IPC (tickets, mesh, etc.)
+│   │   ├── glpi-api.js   # Integração com GLPI REST API
+│   │   ├── logger.js     # Sistema de logs centralizado
+│   │   └── update-manager.js
+│   └── renderer/         # Frontend (HTML/CSS/JS)
+│       ├── index.html
+│       ├── css/
+│       └── js/
+└── dist/                 # Saída dos instaladores (gerado)
+```
+
+## 🔒 Segurança e LGPD
+
+- O acesso remoto só é iniciado **com consentimento explícito do usuário** (checklist de 4 itens)
+- Toda comunicação é criptografada via TLS/WebSocket seguro
+- Nenhum dado é enviado sem autorização do usuário
+- O usuário pode encerrar a sessão remota a qualquer momento
+
+## 📞 Suporte
+
+**Setor de TI — COPPEAD/UFRJ**  
+📧 ti@coppead.ufrj.br  
+🌐 https://chamados.intranet.coppead.ufrj.br
 
 ---
 
-## 🔒 Segurança e Legibilidade
-*   **Isolamento de Contexto:** A interface web não possui acesso direto aos módulos do Node.js ou comandos do shell, comunicando-se apenas via funções permitidas expostas no `preload.js`.
-*   **Prevenção de Injeção de Código (XSS):** Todas as entradas e chats de suporte passam por pipelines de limpeza de caracteres antes da inserção na árvore de elementos DOM.
+<div align="center">
+  <sub>Desenvolvido com ❤️ pelo Setor de TI do COPPEAD/UFRJ</sub>
+</div>

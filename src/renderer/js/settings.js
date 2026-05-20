@@ -47,7 +47,7 @@ export async function saveAgentSettings(event) {
   const glpiUrl = document.getElementById('settings-glpi-url')?.value.trim();
   const appToken = document.getElementById('settings-glpi-app-token')?.value.trim();
   const userToken = document.getElementById('settings-glpi-user-token')?.value.trim();
-  const meshUrl = document.getElementById('settings-mesh-url')?.value.trim();
+  const meshUrl = document.getElementById('settings-mesh-url')?.value.trim() || document.getElementById('settings-mesh-url')?.placeholder;
   const meshGroupId = document.getElementById('settings-mesh-group')?.value.trim();
   const updateChannel = document.getElementById('settings-update-channel')?.value || 'stable';
 
@@ -91,7 +91,8 @@ export async function testAllConnections() {
         : `❌ Conexão GLPI: Falhou (${glpiRes.message})`;
 
       // 2. Test MeshCentral connection
-      const meshUrl = document.getElementById('settings-mesh-url').value.trim();
+      const meshUrlEl = document.getElementById('settings-mesh-url');
+      const meshUrl = meshUrlEl.value.trim() || meshUrlEl.placeholder;
       const meshRes = await window.electronAPI.testMeshConnection(meshUrl);
       const meshMsg = meshRes.ok
         ? '✅ Conexão MeshCentral: Bem-sucedida!'

@@ -393,8 +393,8 @@ export async function submitTicket(event) {
         if (attachedFile) {
           try {
             const arrayBuffer = await attachedFile.arrayBuffer();
-            const buffer = Buffer.from(arrayBuffer);
-            await window.electronAPI.glpiUploadDocument(ticketId, attachedFile.name, buffer);
+            const uint8Array = new Uint8Array(arrayBuffer);
+            await window.electronAPI.glpiUploadDocument(ticketId, attachedFile.name, uint8Array);
           } catch (fileErr) {
             console.error('Falha ao subir anexo:', fileErr);
             alert(`Chamado criado com sucesso, mas o anexo falhou no envio: ${fileErr.message}`);

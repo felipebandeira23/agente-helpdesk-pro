@@ -1093,7 +1093,9 @@ body.light-theme .font-scale-btn {
   background: #ffffff;
 }
 body.light-theme .font-scale-btn.active {
-  color: #ffffff;
+  background: var(--accent-neon) !important;
+  color: #000000 !important;
+  border-color: var(--accent-neon) !important;
 }
 
 /* 3. Modo Compacto de Suporte Técnico */

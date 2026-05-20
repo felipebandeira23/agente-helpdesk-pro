@@ -1,47 +1,101 @@
 {
   "name": "agente-helpdesk-pro",
   "version": "1.0.0",
-  "description": "Agente Helpdesk Pro - Suporte Inteligente e Acesso Remoto",
+  "description": "Agente Helpdesk Pro - Suporte Técnico Inteligente com Acesso Remoto Seguro",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder --win nsis",
+    "dist:portable": "electron-builder --win portable",
+    "dist:all": "electron-builder --win nsis portable"
   },
   "dependencies": {
     "axios": "^1.6.2",
     "chart.js": "^4.4.1",
     "ssh2": "^1.17.0"
   },
-  "author": "IT Support Pro Team",
+  "author": {
+    "name": "COPPEAD/UFRJ — Setor de TI",
+    "email": "ti@coppead.ufrj.br"
+  },
   "devDependencies": {
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
     "electron-packager": "^17.1.2"
   },
   "build": {
-    "appId": "com.helpdesk.agent.pro",
-    "win": {
-      "target": "nsis",
-      "icon": "src/assets/icon.ico"
+    "appId": "br.ufrj.coppead.helpdesk.agent",
+    "productName": "Agente Helpdesk Pro",
+    "copyright": "Copyright © 2025 COPPEAD/UFRJ — Setor de TI",
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
     },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Agente Helpdesk Pro",
-      "runAfterFinish": true
-    },
+    "files": [
+      "src/**/*",
+      "node_modules/**/*",
+      "package.json",
+      "!node_modules/.cache",
+      "!**/*.map",
+      "!**/test*",
+      "!**/scratch*",
+      "!**/check-*.js",
+      "!**/diagnose-*.js",
+      "!**/test-*.js"
+    ],
     "extraResources": [
       {
         "from": "assets",
         "to": "assets",
         "filter": [
           "meshagent64.exe",
-          "meshagentarm64.exe"
+          "meshagentarm64.exe",
+          "icon.ico",
+          "icon.png"
         ]
+      },
+      {
+        "from": "certs",
+        "to": "certs",
+        "filter": ["*.pem", "*.crt"]
       }
-    ]
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "publisherName": "COPPEAD/UFRJ",
+      "verifyUpdateCodeSignature": false,
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "portable": {
+      "artifactName": "AgentHelpdeskPro-Portable-${version}.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": false,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Agente Helpdesk Pro",
+      "runAfterFinish": true,
+      "menuCategory": "COPPEAD",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "AgentHelpdeskPro-Setup-${version}.exe",
+      "installerLanguages": ["pt_BR"],
+      "language": "1046",
+      "include": "build/installer.nsh"
+    },
+    "publish": null
   }
 }
+

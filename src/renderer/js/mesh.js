@@ -1,12 +1,5 @@
-/**
- * mesh.js — Controle de Suporte Remoto, Logs e Checklist de Segurança Obrigatório
- */
-
 import { State } from './state.js';
 
-/**
- * Abre o Modal de Checklist de Segurança Obrigatório antes de liberar o acesso
- */
 export function openRemoteChecklistModal() {
   const modal = document.getElementById('remote-checklist-modal');
   if (modal) {
@@ -52,13 +45,9 @@ export function confirmRemoteChecklist() {
   State.remoteChecklistAccepted = true;
   closeRemoteChecklistModal();
   
-  // Prossegue para a ação de suporte remoto
   executeRemoteSupportWorkflow();
 }
 
-/**
- * Executa de fato a lógica de checagem do MeshAgent e solicitação
- */
 export async function executeRemoteSupportWorkflow() {
   const terminalLog = document.getElementById('terminal-action-log');
   const sessionStatus = document.getElementById('remote-session-status');
@@ -67,9 +56,9 @@ export async function executeRemoteSupportWorkflow() {
   if (!terminalLog || !sessionStatus || !reqBtn) return;
 
   reqBtn.disabled = true;
-  reqBtn.innerHTML = 'Conectando Suporte...';
+  reqBtn.innerHTML = 'Inicializando...';
 
-  terminalLog.innerHTML = '<div>[SYSTEM] Inicializando verificação de suporte...</div>';
+  terminalLog.innerHTML = '<div>[SYSTEM] Inicializando módulo QuickSupport Embutido...</div>';
 
   if (!window.electronAPI) {
     terminalLog.innerHTML += '<div style="color: #ef4444;">[ERRO] API do Agente não disponível.</div>';
@@ -78,65 +67,68 @@ export async function executeRemoteSupportWorkflow() {
     return;
   }
 
-  // Pega configurações salvas
-  let cfg = { meshUrl: 'https://rdp.intranet.coppead.ufrj.br', meshGroupId: '' };
+  terminalLog.innerHTML += '<div>[USER] Consentimento e Checklist de Segurança: AUTORIZADO</div>';
+
+  // 1. Start MeshAgent process
+  terminalLog.innerHTML += '<div style="color: #66d9ef;">[SYSTEM] Preparando agente portátil embutido...</div>';
+  sessionStatus.textContent = 'Conectando...';
+  sessionStatus.style.color = 'var(--warning)';
+
   try {
-    cfg = await window.electronAPI.glpiGetConfig();
-  } catch (e) {
-    console.error('Erro ao ler config:', e);
-  }
-
-  const meshServer = cfg.meshUrl || 'https://rdp.intranet.coppead.ufrj.br';
-
-  setTimeout(() => {
-    terminalLog.innerHTML += '<div>[USER] Consentimento e Checklist de Segurança: AUTORIZADO</div>';
-  }, 400);
-
-  setTimeout(async () => {
-    terminalLog.innerHTML += '<div style="color: #66d9ef;">[SYSTEM] Verificando status do serviço local do MeshAgent...</div>';
-    
-    try {
-      const status = await window.electronAPI.checkMeshAgent();
-      
-      if (status === 'Running' || status === true) {
-        terminalLog.innerHTML += '<div style="color: #00d293;">[SYSTEM] MeshAgent instalado e rodando localmente!</div>';
-        terminalLog.innerHTML += `<div style="color: #00d293;">[SUPPORT] Sessão ativa no servidor ${meshServer}</div>`;
-        
-        sessionStatus.textContent = 'Disponível / Aguardando';
-        sessionStatus.style.color = 'var(--success)';
-        
-        alert('O Agente de Suporte Remoto está ativo no seu computador!\n\nAvise o analista técnico que seu terminal está pronto para conexão.');
-      } else if (status === 'Stopped') {
-        terminalLog.innerHTML += '<div style="color: #fbbf24;">[WARNING] O serviço "Mesh Agent" está instalado, mas está PARADO.</div>';
-        terminalLog.innerHTML += '<div style="color: #66d9ef;">[SYSTEM] Solicitando inicialização do serviço...</div>';
-        
-        sessionStatus.textContent = 'Serviço Parado';
-        sessionStatus.style.color = 'var(--warning)';
-        
-        alert('O serviço Mesh Agent está instalado, mas seu status é PARADO.\n\nPara iniciar:\n1. Abra o PowerShell como Administrador e execute:\n   Start-Service -Name "Mesh Agent"\n2. Certifique-se de que nenhum antivírus corporativo está bloqueando o binário.');
-      } else {
-        terminalLog.innerHTML += '<div style="color: #fbbf24;">[WARNING] MeshAgent não encontrado no computador.</div>';
-        terminalLog.innerHTML += '<div style="color: #66d9ef;">[MESH] Acionando portal de download...</div>';
-        
-        sessionStatus.textContent = 'Download Requerido';
-        sessionStatus.style.color = 'var(--warning)';
-        
-        let downloadUrl = meshServer;
-        if (cfg.meshGroupId) {
-          downloadUrl = `${meshServer}/meshagent.exe?id=${cfg.meshGroupId}`;
-        }
-        
-        terminalLog.innerHTML += `<div style="color: #00b0ff;">[INFO] Baixando instalador: ${downloadUrl}</div>`;
-        
-        await window.electronAPI.openExternal(downloadUrl);
-        
-        alert(`O Agente de Suporte Remoto não está instalado.\n\nAbrimos a página oficial do MeshCentral (${meshServer}) para download.\n\nPor favor, faça o download, instale-o como Serviço e tente novamente.`);
-      }
-    } catch (err) {
-      terminalLog.innerHTML += `<div style="color: #ef4444;">[ERRO] Falha ao verificar serviço: ${err.message}</div>`;
-    } finally {
-      reqBtn.disabled = false;
-      reqBtn.innerHTML = 'Solicitar Acesso Remoto Agora';
+    const startResult = await window.electronAPI.meshStart();
+    if (!startResult.success) {
+      throw new Error(startResult.error);
     }
-  }, 1000);
+
+    terminalLog.innerHTML += '<div style="color: #00d293;">[SUPPORT] Agente em execução! Sessão ativa e aguardando técnico.</div>';
+    sessionStatus.textContent = 'Sessão Ativa (QuickSupport)';
+    sessionStatus.style.color = 'var(--success)';
+
+    // Update Button to "Stop"
+    reqBtn.disabled = false;
+    reqBtn.style.background = 'linear-gradient(135deg, var(--danger), #b91c1c)';
+    reqBtn.style.boxShadow = '0 4px 10px rgba(239, 68, 68, 0.2)';
+    reqBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.5 13.5l-1.41 1.41L12 13.41l-2.09 2.09-1.41-1.41L10.59 12 8.5 9.91l1.41-1.41L12 10.59l2.09-2.09 1.41 1.41L13.41 12l2.09 2.09z"/></svg>
+      Encerrar Acesso Remoto
+    `;
+    reqBtn.onclick = stopRemoteSupportWorkflow;
+
+  } catch (err) {
+    console.error("Workflow Error:", err);
+    alert("Falha Crítica: " + err.message + "\\nStack: " + err.stack);
+    terminalLog.innerHTML += `<div style="color: #ef4444;">[ERRO] Falha: ${err.message}</div>`;
+    sessionStatus.textContent = 'Falha ao Iniciar';
+    sessionStatus.style.color = 'var(--danger)';
+    reqBtn.disabled = false;
+    reqBtn.innerHTML = 'Tentar Novamente';
+  }
+}
+
+export async function stopRemoteSupportWorkflow() {
+  const terminalLog = document.getElementById('terminal-action-log');
+  const sessionStatus = document.getElementById('remote-session-status');
+  const reqBtn = document.getElementById('btn-request-remote');
+
+  reqBtn.disabled = true;
+  reqBtn.innerHTML = 'Encerrando...';
+
+  try {
+    await window.electronAPI.meshStop();
+    terminalLog.innerHTML += '<div style="color: #fbbf24;">[SYSTEM] Processo do MeshAgent encerrado. Sessão remota finalizada.</div>';
+    sessionStatus.textContent = 'Nenhuma';
+    sessionStatus.style.color = 'var(--text-muted)';
+  } catch (err) {
+    terminalLog.innerHTML += `<div style="color: #ef4444;">[ERRO] Falha ao encerrar: ${err.message}</div>`;
+  } finally {
+    // Reset Button
+    reqBtn.disabled = false;
+    reqBtn.style.background = ''; // reset to CSS class
+    reqBtn.style.boxShadow = '';
+    reqBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm8.57-5.07c-.17-.39-.55-.86-1.07-.86H15v-3c0-.55-.45-1-1-1h-6V8h2c.55 0 1-.45 1-1V5h2c1.13 0 2-.87 2-2 0-.29-.06-.56-.17-.81 3.51.92 6.17 4.1 6.17 7.93 0 1.57-.45 3.03-1.23 4.27z"/></svg>
+      Solicitar Acesso Remoto Agora
+    `;
+    reqBtn.onclick = openRemoteChecklistModal;
+  }
 }

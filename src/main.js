@@ -9,8 +9,8 @@ const glpiApi = require('./main/glpi-api');
 const updateManager = require('./main/update-manager');
 
 // Importação de Serviços Modularizados
-const { ensureMeshAgentInstalled } = require('./main/services/mesh-installer');
 const { startInventoryScheduler } = require('./main/services/inventory-scheduler');
+const { startNotificationScheduler } = require('./main/services/notification-scheduler');
 
 // Importação de Roteadores IPC Modularizados
 const { registerSystemIPCHandlers } = require('./main/ipc/system');
@@ -73,6 +73,10 @@ if (!gotTheLock) {
     }
   });
 
+  app.on('before-quit', () => {
+    app.isQuitting = true;
+  });
+
   app.whenReady().then(async () => {
     logger.info('Iniciando Agente Helpdesk Pro...', 'MAIN');
     
@@ -96,17 +100,13 @@ if (!gotTheLock) {
     // Carrega a UI principal
     createWindow();
 
-    // Inicialização assíncrona do MeshAgent em background
-    ensureMeshAgentInstalled().then(success => {
-      if (success) {
-        diagManager.updateMeshStatus('connected');
-      } else {
-        diagManager.updateMeshStatus('error');
-      }
-    });
+    // MeshAgent embutido — inicia sob demanda via IPC 'mesh-start'
+    // (sem verificação de serviço do Windows; o runner cuida disso)
+    diagManager.updateMeshStatus('ready');
 
-    // Inicia os temporizadores automatizados de inventário
+    // Inicia os temporizadores automatizados de inventário e notificações
     startInventoryScheduler();
+    startNotificationScheduler();
 
     // Setup do Ícone da Bandeja do Sistema (Tray Icon)
     let iconPath = path.join(__dirname, 'assets/icon.ico');
