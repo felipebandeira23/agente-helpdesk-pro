@@ -2,7 +2,7 @@
  * inventory-scheduler.js — Serviço de agendamento resiliente de inventário com backoff e proteção de recursos
  */
 
-const { collectInventory, isSystemUnderHeavyLoad } = require('./inventory-collector');
+const { collectInventory, isSystemUnderHeavyLoad } = require('../inventory-collector');
 const glpiApi = require('../glpi-api');
 const logger = require('../logger');
 const fs = require('fs');
