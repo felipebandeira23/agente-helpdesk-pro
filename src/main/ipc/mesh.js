@@ -19,7 +19,7 @@ function registerMeshIPCHandlers() {
     }
   });
 
-  // Test HTTPS connection with strict TLS in production
+  // Test connection supporting HTTP/HTTPS and corporate CA or fallback bypass for intranet
   ipcMain.handle('test-mesh-connection', async (event, meshUrl) => {
     return new Promise((resolve) => {
       if (!meshUrl) {
@@ -33,14 +33,35 @@ function registerMeshIPCHandlers() {
       }
       
       const cleanUrl = meshUrl.replace(/\/$/, '');
+      const isHttps = cleanUrl.startsWith('https');
+      const httpModule = isHttps ? https : require('http');
       
-      // Em produção (app empacotado), validamos rigorosamente o certificado TLS do MeshCentral
-      const rejectUnauthorized = app.isPackaged;
-      const agent = new https.Agent({ rejectUnauthorized });
+      let agent = undefined;
+      let tlsInfo = 'Nenhum';
       
-      logger.info(`Testando conexão remota MeshCentral: ${cleanUrl} (Verificação TLS: ${rejectUnauthorized})`, 'IPC-MESH');
+      if (isHttps) {
+        const path = require('path');
+        const fs = require('fs');
+        const caPath = path.join(__dirname, '..', '..', 'certs', 'ca-cert.pem');
+        const isCoppead = cleanUrl.includes('.coppead.ufrj.br') || cleanUrl.includes('localhost') || cleanUrl.includes('127.0.0.1');
+        const agentOpts = { rejectUnauthorized: isCoppead ? false : app.isPackaged };
+        
+        if (fs.existsSync(caPath)) {
+          agentOpts.ca = fs.readFileSync(caPath);
+          tlsInfo = isCoppead ? 'CA Corporativa + Bypass Intranet' : 'CA Corporativa Ativa';
+        } else {
+          if (isCoppead) {
+            tlsInfo = 'Bypass Intranet Ativo';
+          } else {
+            tlsInfo = app.isPackaged ? 'Estrito' : 'Desabilitado (Dev Mode)';
+          }
+        }
+        agent = new https.Agent(agentOpts);
+      }
+      
+      logger.info(`Testando conexão remota MeshCentral: ${cleanUrl} (Protocolo: ${isHttps ? 'HTTPS' : 'HTTP'}, TLS: ${tlsInfo})`, 'IPC-MESH');
 
-      const req = https.get(cleanUrl, { agent, timeout: 5000 }, (res) => {
+      const req = httpModule.get(cleanUrl, { agent, timeout: 5000 }, (res) => {
         resolve({ ok: true, message: `Conectado com sucesso! Código HTTP: ${res.statusCode}` });
       });
       

@@ -43,7 +43,15 @@ function isDomainAllowed(urlStr) {
 }
 
 function getHttpsAgentOptions() {
-  const opts = { rejectUnauthorized: app.isPackaged };
+  let rejectUnauthorized = app.isPackaged;
+  
+  // Se for domínio da intranet da COPPEAD, não exigimos validação rígida de SSL
+  const glpiUrl = getGLPIUrl();
+  if (glpiUrl.includes('.coppead.ufrj.br') || glpiUrl.includes('localhost') || glpiUrl.includes('127.0.0.1')) {
+    rejectUnauthorized = false;
+  }
+  
+  const opts = { rejectUnauthorized };
   
   // Se existir um certificado CA interno, utiliza-o para verificação
   const caPath = path.join(__dirname, '..', '..', 'certs', 'ca-cert.pem');
