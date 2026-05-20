@@ -7,12 +7,18 @@ let meshProcess = null;
 
 function getAssetsDir() {
   const { app } = require('electron');
-  return path.join(app.getAppPath(), 'assets');
+  if (app.isPackaged) {
+    // Produção: extraResources são copiados para resources/assets/ (fora do ASAR)
+    return path.join(process.resourcesPath, 'assets');
+  }
+  // Desenvolvimento: pasta assets/ na raiz do projeto
+  return path.join(__dirname, '..', '..', '..', 'assets');
 }
 
 function getMeshExecutablePath() {
   return path.join(getAssetsDir(), 'meshagent64.exe');
 }
+
 
 function getMshPath() {
   // O nome do .msh deve ser idêntico ao do executável
