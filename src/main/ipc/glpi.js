@@ -29,6 +29,35 @@ function registerGlpiIPCHandlers() {
     }
   });
 
+  // Autenticação LDAP com credenciais Windows
+  ipcMain.handle('glpi-login', async (event, { login, password }) => {
+    try {
+      const result = await glpiApi.loginWithCredentials(login, password);
+      logger.info(`[AUTH] Login LDAP bem-sucedido para: ${login}`, 'IPC-GLPI');
+      return { ok: true, message: result.message, userName: result.userName };
+    } catch (e) {
+      logger.warn(`[AUTH] Falha no login LDAP para "${login}": ${e.message}`, 'IPC-GLPI');
+      const msg = e.response?.status === 401
+        ? 'Usuário ou senha incorretos. Verifique suas credenciais do Windows.'
+        : e.message;
+      return { ok: false, message: msg };
+    }
+  });
+
+  ipcMain.handle('glpi-get-windows-user', () => {
+    return glpiApi.getWindowsUser();
+  });
+
+  ipcMain.handle('glpi-logout', async () => {
+    try {
+      await glpiApi.killSession();
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, message: e.message };
+    }
+  });
+
+
   // Categorias & Localizações
   ipcMain.handle('glpi-get-categories', async () => {
     try {

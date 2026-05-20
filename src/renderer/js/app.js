@@ -9,6 +9,7 @@ import { loadCategories, loadLocations, loadTickets, autoCategorizeTicketTitle, 
 import { viewTicketDetails, submitFollowup, triggerChatFileInput, handleChatFileSelect, removeChatFile, generateChatMarkdownSummary } from './chat.js';
 import { openRemoteChecklistModal, closeRemoteChecklistModal, confirmRemoteChecklist, evaluateRemoteChecklistProgress } from './mesh.js';
 import { loadAgentSettingsIntoForm, saveAgentSettings, testAllConnections, handleFontScaleChange, handleCompactModeChange, checkUpdatesSilently, checkUpdatesManually, startUpdateWorkflow, dismissUpdateBanner, closeChangelogModal } from './settings.js';
+import { checkAndPromptLogin } from './auth.js';
 
 // Inicializador Central
 document.addEventListener('DOMContentLoaded', async () => {
@@ -43,6 +44,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Inicializa o Assistente de Autodiagnóstico Ativo
   startSelfDiagnosticAssistant();
+
+  // Verifica sessão GLPI e promove login automático se necessário
+  checkAndPromptLogin();
+
+  // Recarrega dados quando autenticado com sucesso
+  window.addEventListener('glpi-authenticated', async (e) => {
+    const { login, userName } = e.detail;
+    console.log(`[AUTH] Usuário autenticado: ${userName || login}. Recarregando dados...`);
+    try {
+      await loadCategories();
+      await loadLocations();
+      await loadTickets();
+      await renderDashboardRecentTickets();
+    } catch (err) {
+      console.warn('[AUTH] Erro ao recarregar dados após login:', err.message);
+    }
+  });
 });
 
 /**

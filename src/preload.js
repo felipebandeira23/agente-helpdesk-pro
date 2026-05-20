@@ -17,6 +17,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   glpiGetConfig:       () => ipcRenderer.invoke('glpi-get-config'),
   glpiSetConfig:       (cfg) => ipcRenderer.invoke('glpi-set-config', cfg),
   glpiTestConnection:  () => ipcRenderer.invoke('glpi-test-connection'),
+  glpiLogin:           (login, password) => ipcRenderer.invoke('glpi-login', { login, password }),
+  glpiGetWindowsUser:  () => ipcRenderer.invoke('glpi-get-windows-user'),
+  glpiLogout:          () => ipcRenderer.invoke('glpi-logout'),
 
   // GLPI — Categorias
   glpiGetCategories:   () => ipcRenderer.invoke('glpi-get-categories'),

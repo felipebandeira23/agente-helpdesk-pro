@@ -393,6 +393,76 @@ async function initSession() {
 }
 
 /**
+ * Autentica no GLPI via LDAP usando usuário e senha do Windows.
+ * A senha NUNCA é armazenada — apenas o session_token resultante é salvo.
+ *
+ * @param {string} login  - Nome de usuário (sem domínio, ex: "felipe.bandeira")
+ * @param {string} password - Senha do Active Directory / LDAP
+ * @returns {Promise<{ok: boolean, message: string, userName?: string}>}
+ */
+async function loginWithCredentials(login, password) {
+  if (!login || !password) {
+    throw new Error('Usuário e senha são obrigatórios.');
+  }
+
+  if (!_config.glpiUrl) {
+    throw new Error('URL do GLPI não configurada.');
+  }
+
+  if (!_config.appToken) {
+    _config.appToken = 'KEFWiWcIFqIJNTpUOJksKMt6OmnBoGT6V1JCvX0F';
+  }
+
+  const client = buildClient();
+  const credentials = Buffer.from(`${login}:${password}`).toString('base64');
+
+  logger.info(`[AUTH] Autenticando usuário "${login}" via LDAP/Basic Auth`, 'GLPI-API');
+
+  const res = await client.get(`${_config.glpiUrl}/apirest.php/initSession`, {
+    headers: {
+      'App-Token': _config.appToken,
+      'Authorization': `Basic ${credentials}`,
+      'Content-Type': 'application/json',
+    }
+  });
+
+  if (!res.data || !res.data.session_token) {
+    throw new Error('Autenticação falhou: resposta inválida do servidor GLPI.');
+  }
+
+  // Salva o session_token (criptografado) — jamais a senha
+  _config.sessionToken = res.data.session_token;
+  _config.sessionExpiry = Date.now() + 28 * 60 * 1000;
+  _config.userToken = ''; // limpa user_token manual se existia
+  saveConfig(_config);
+
+  logger.info(`[AUTH] Usuário "${login}" autenticado com sucesso no GLPI via LDAP.`, 'GLPI-API');
+
+  // Tenta buscar o nome completo do usuário no GLPI
+  let userName = login;
+  try {
+    const userRes = await client.get(`${_config.glpiUrl}/apirest.php/getMyProfiles`, {
+      headers: { 'App-Token': _config.appToken, 'Session-Token': _config.sessionToken }
+    });
+    if (userRes.data && userRes.data.myprofiles && userRes.data.myprofiles.length > 0) {
+      const profile = userRes.data.myprofiles[0];
+      if (profile.entities && profile.entities[0] && profile.entities[0].name) {
+        userName = login; // mantém login pois GLPI não retorna nome completo aqui
+      }
+    }
+  } catch (e) { /* ignora */ }
+
+  return { ok: true, message: `Autenticado como ${login}`, userName };
+}
+
+/**
+ * Retorna o nome de usuário do SO (sem domínio) para pré-preencher o login
+ */
+function getWindowsUser() {
+  return os.userInfo().username;
+}
+
+/**
  * Encerra a sessão atual no GLPI
  */
 async function killSession() {
