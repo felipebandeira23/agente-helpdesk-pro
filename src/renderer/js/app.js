@@ -4,7 +4,7 @@
 
 import { State } from './state.js';
 import { switchScreen, applyFontScale, applyCompactMode } from './dom.js';
-import { setupCharts, startTelemetryUpdates, renderDashboardRecentTickets, renderFAQ, updateDashboardCharts, renderSLASemaphore } from './dashboard.js';
+import { setupCharts, startTelemetryUpdates, renderDashboardRecentTickets, renderFAQ, updateDashboardCharts, renderSLASemaphore, initializeDashboardFilters, applyDashboardFilters, resetDashboardFilters } from './dashboard.js';
 import { loadCategories, loadLocations, loadTickets, autoCategorizeTicketTitle, triggerRecurrenceCheck, submitTicket, triggerFileInput, handleFileSelect } from './tickets.js';
 import { viewTicketDetails, submitFollowup, triggerChatFileInput, handleChatFileSelect, removeChatFile, generateChatMarkdownSummary, updateTicketFieldFromAdmin, closeTicketFromAdmin, handleProgressSliderChange, openQuickAddModal, closeQuickAddModal, submitQuickAddTicket } from './chat.js';
 import { openRemoteChecklistModal, closeRemoteChecklistModal, confirmRemoteChecklist, evaluateRemoteChecklistProgress } from './mesh.js';
@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       await loadCategories();
       await loadLocations();
       await loadTickets();
+      initializeDashboardFilters();
       renderDashboardRecentTickets();
       updateDashboardCharts();
       renderSLASemaphore();
@@ -127,6 +128,7 @@ async function checkProxyStatus() {
       await loadTickets();
 
       // Sprint 1.0: Atualiza gráficos do dashboard
+      initializeDashboardFilters();
       updateDashboardCharts();
       renderSLASemaphore();
       renderDashboardRecentTickets();

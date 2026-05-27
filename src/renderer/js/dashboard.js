@@ -334,11 +334,13 @@ export function renderFAQ() {
 export function updateDashboardCharts() {
   if (!State.ticketsList || State.ticketsList.length === 0) return;
 
+  const filteredTickets = getFilteredDashboardTickets();
+
   // Count tickets by status
   const statusCounts = [0, 0, 0, 0, 0]; // new, in progress, pending, resolved, closed
   const originCounts = [0, 0, 0, 0, 0]; // email, portal, chat, phone, agent
 
-  State.ticketsList.forEach(t => {
+  filteredTickets.forEach(t => {
     const status = parseInt(t.status);
     if (status === 1) statusCounts[0]++;
     else if (status === 2 || status === 3) statusCounts[1]++;
@@ -369,10 +371,11 @@ export function renderSLASemaphore() {
   const container = document.getElementById('sla-semaphore-container');
   if (!container) return;
 
+  const filteredTickets = getFilteredDashboardTickets();
   const now = Date.now();
   let warning = 0, critical = 0, paused = 0;
 
-  State.ticketsList.forEach(t => {
+  filteredTickets.forEach(t => {
     if (parseInt(t.status) === 6 || parseInt(t.status) === 5) return;
 
     const resolveTime = new Date(t.time_to_resolve).getTime();
@@ -407,4 +410,106 @@ export function renderSLASemaphore() {
   `;
 
   container.innerHTML = htmlSemaphore;
+}
+
+function getFilteredDashboardTickets() {
+  const periodFilter = document.getElementById('dashboard-filter-period')?.value || 'all';
+  const operatorFilter = document.getElementById('dashboard-filter-operator')?.value || 'all';
+  const customerFilter = document.getElementById('dashboard-filter-customer')?.value || 'all';
+  const categoryFilter = document.getElementById('dashboard-filter-category')?.value || 'all';
+
+  const now = Date.now();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return State.ticketsList.filter(t => {
+    // Period filter
+    if (periodFilter !== 'all') {
+      const ticketDate = new Date(t.date);
+      const daysDiff = Math.floor((now - ticketDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (periodFilter === 'today' && daysDiff > 0) return false;
+      if (periodFilter === 'week' && daysDiff > 7) return false;
+      if (periodFilter === 'month' && daysDiff > 30) return false;
+      if (periodFilter === 'quarter' && daysDiff > 90) return false;
+    }
+
+    // Operator filter
+    if (operatorFilter !== 'all' && t.technician_id && t.technician_id !== operatorFilter) return false;
+
+    // Customer filter
+    if (customerFilter !== 'all' && t.requester_id && t.requester_id !== customerFilter) return false;
+
+    // Category filter
+    if (categoryFilter !== 'all' && t.category_id && t.category_id !== categoryFilter) return false;
+
+    return true;
+  });
+}
+
+export function initializeDashboardFilters() {
+  const operatorSelect = document.getElementById('dashboard-filter-operator');
+  const customerSelect = document.getElementById('dashboard-filter-customer');
+  const categorySelect = document.getElementById('dashboard-filter-category');
+
+  if (operatorSelect) {
+    operatorSelect.innerHTML = '<option value="all">Operador: Todos</option>';
+    const operators = new Set();
+    State.ticketsList.forEach(t => {
+      if (t.technician_id && t.technician_name) {
+        operators.add(JSON.stringify({ id: t.technician_id, name: t.technician_name }));
+      }
+    });
+    operators.forEach(opStr => {
+      const op = JSON.parse(opStr);
+      const option = document.createElement('option');
+      option.value = op.id;
+      option.textContent = op.name;
+      operatorSelect.appendChild(option);
+    });
+  }
+
+  if (customerSelect) {
+    customerSelect.innerHTML = '<option value="all">Cliente: Todos</option>';
+    const customers = new Set();
+    State.ticketsList.forEach(t => {
+      if (t.requester_id && t.requester_name) {
+        customers.add(JSON.stringify({ id: t.requester_id, name: t.requester_name }));
+      }
+    });
+    customers.forEach(custStr => {
+      const cust = JSON.parse(custStr);
+      const option = document.createElement('option');
+      option.value = cust.id;
+      option.textContent = cust.name;
+      customerSelect.appendChild(option);
+    });
+  }
+
+  if (categorySelect) {
+    categorySelect.innerHTML = '<option value="all">Categoria: Todas</option>';
+    State.categoriesList.forEach(cat => {
+      const option = document.createElement('option');
+      option.value = cat.id;
+      option.textContent = cat.name;
+      categorySelect.appendChild(option);
+    });
+  }
+}
+
+export function applyDashboardFilters() {
+  updateDashboardCharts();
+  renderSLASemaphore();
+}
+
+export function resetDashboardFilters() {
+  const selects = [
+    document.getElementById('dashboard-filter-period'),
+    document.getElementById('dashboard-filter-operator'),
+    document.getElementById('dashboard-filter-customer'),
+    document.getElementById('dashboard-filter-category')
+  ];
+  selects.forEach(select => {
+    if (select) select.value = 'all';
+  });
+  applyDashboardFilters();
 }
