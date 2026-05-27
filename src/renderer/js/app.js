@@ -12,6 +12,7 @@ import { loadAssets, renderAssetsTable, filterAssetsTable, resetAssetsFilters, v
 import { generateReport, displayReportPreview, exportReportAsCSV, printReport } from './reports.js';
 import { loadAutomationRules, renderAutomationRules, toggleAutomationRule, deleteAutomationRule } from './automation.js';
 import { initializeChannels, renderChannelConfig, renderChannelStatus, toggleChannel } from './multichannel.js';
+import { initializePortal, renderPortalSetup, renderKnowledgeBase, togglePortalFeature } from './portal.js';
 import { loadAgentSettingsIntoForm, saveAgentSettings, testAllConnections, handleFontScaleChange, handleCompactModeChange, checkUpdatesSilently, checkUpdatesManually, startUpdateWorkflow, dismissUpdateBanner, closeChangelogModal, loadSLASettings, saveSLASettings, getSLATimeForTicket } from './settings.js';
 import { checkAndPromptLogin } from './auth.js';
 
@@ -103,7 +104,7 @@ function setupInitialUI() {
     setTimeout(checkUpdatesSilently, 4000);
   }
 
-  // Carrega configurações do GLPI, SLA, Automação e Multi-canal
+  // Carrega configurações do GLPI, SLA, Automação, Multi-canal e Portal
   loadAgentSettingsIntoForm();
   loadSLASettings();
   loadAutomationRules();
@@ -111,6 +112,9 @@ function setupInitialUI() {
   initializeChannels();
   renderChannelConfig();
   renderChannelStatus();
+  initializePortal();
+  renderPortalSetup();
+  renderKnowledgeBase();
 }
 
 /**
@@ -548,4 +552,34 @@ window.toggleMultichannelChannel = function(channelId) {
 
 window.openChannelConfigModal = function(channelId) {
   alert('Configuração de canais virá em breve com UI aprimorada.');
+};
+
+// Sprint 3.1: Portal global functions
+window.copyPortalLink = function() {
+  const input = document.querySelector('[value*="helpdesk.example.com/portal"]');
+  if (input) {
+    input.select();
+    document.execCommand('copy');
+    alert('Link copiado para a área de transferência!');
+  }
+};
+
+window.togglePortalFeature = function(feature) {
+  togglePortalFeature(feature);
+  renderPortalSetup();
+};
+
+window.updatePortalRequiresLogin = function(value) {
+  const settings = { requiresLogin: value };
+  const module = { updatePortalSettings };
+  Object.keys(module).forEach(key => {
+    if (typeof window[key] !== 'function') {
+      window[key] = module[key];
+    }
+  });
+};
+
+window.updatePortalTimeout = function(minutes) {
+  // This will be connected to actual portal settings update
+  console.log(`Timeout de sessão atualizado para: ${minutes} minutos`);
 };
