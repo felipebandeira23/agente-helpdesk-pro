@@ -60,6 +60,16 @@ export function switchScreen(screenName) {
 
   State.activeScreen = screenName;
 
+  // Ativa/desativa modo fullscreen para o ticket detail
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent) {
+    if (screenName === 'ticket-detail') {
+      mainContent.classList.add('main-content--ticket-detail');
+    } else {
+      mainContent.classList.remove('main-content--ticket-detail');
+    }
+  }
+
   // Desativa todas as telas
   const screens = document.querySelectorAll('.screen');
   screens.forEach(s => s.classList.remove('active'));

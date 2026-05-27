@@ -23,7 +23,7 @@
         <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
         Início
       </button>
-      <button class="nav-btn" onclick="switchScreen('new-ticket')">
+      <button class="nav-btn" onclick="openQuickAddModal()">
         <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
         Abrir Chamado
       </button>
@@ -316,54 +316,115 @@
       </section>
 
 
-      <!-- SCREEN: TICKET DETAIL & CHAT -->
+      <!-- SCREEN: TICKET DETAIL & CHAT (Sprint 0.5 — Split Layout 70/30) -->
       <section id="screen-ticket-detail" class="screen">
-        <button class="btn-secondary" style="margin-bottom: 20px;" onclick="switchScreen('tickets-list')">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="transform: rotate(180deg);"><path d="M5 13h11.86l-5.43 5.43 1.42 1.42L21.14 12l-8.29-8.29-1.42 1.42 5.43 5.43H5v2z"/></svg>
-          Voltar para a Lista
-        </button>
 
-        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
-          <!-- Detail panel -->
-          <div class="card" style="display: flex; flex-direction: column; gap: 18px; align-self: flex-start;">
-            <div style="border-bottom: 1px solid var(--border-glass); padding-bottom: 16px;">
-              <span id="detail-ticket-id" class="ticket-id" style="font-size: 24px;">#---</span>
-              <h3 id="detail-ticket-title" style="font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-top: 8px;">Carregando...</h3>
+        <!-- TopBar: Voltar + ID + Título + Badges -->
+        <div class="ticket-topbar">
+          <button class="btn-secondary" style="flex-shrink: 0;" onclick="switchScreen('tickets-list')">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="transform: rotate(180deg);"><path d="M5 13h11.86l-5.43 5.43 1.42 1.42L21.14 12l-8.29-8.29-1.42 1.42 5.43 5.43H5v2z"/></svg>
+            Voltar
+          </button>
+          <div class="ticket-header-info">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <span id="detail-ticket-id" class="ticket-id" style="font-size: 20px;">#---</span>
+              <div id="detail-ticket-status">--</div>
+              <div id="detail-ticket-priority">--</div>
             </div>
-            
-            <div>
-              <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Status</span>
-              <div id="detail-ticket-status" style="margin-top: 4px;">--</div>
-            </div>
+            <h3 id="detail-ticket-title" class="ticket-header-title">Carregando...</h3>
+          </div>
+          <button class="btn-secondary" style="font-size: 11px; padding: 6px 12px; gap: 4px; flex-shrink: 0;" onclick="generateChatMarkdownSummary()">
+            📄 Resumo MD
+          </button>
+        </div>
 
-            <div>
-              <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Categoria</span>
-              <div id="detail-ticket-category" style="font-weight: 500; font-size: 14px; margin-top: 4px;">--</div>
-            </div>
+        <!-- Split 70/30 Layout -->
+        <div class="ticket-split-layout">
 
-            <div>
-              <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Prioridade / Impacto</span>
-              <div id="detail-ticket-priority" style="margin-top: 4px;">--</div>
-            </div>
+          <!-- LEFT: Descrição + Chat (70%) -->
+          <div class="ticket-main-panel">
 
-            <div>
-              <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Data de Abertura</span>
-              <div id="detail-ticket-date" style="font-weight: 500; font-size: 14px; margin-top: 4px;">--</div>
-            </div>
-
-            <div style="border-top: 1px solid var(--border-glass); padding-top: 16px;">
-              <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Descrição</span>
+            <!-- Descrição do Chamado -->
+            <div class="card ticket-desc-card">
+              <div class="ticket-desc-header">
+                <span class="sidebar-label">Descrição do Chamado</span>
+                <span id="detail-ticket-date" style="font-size: 11px; color: var(--text-muted);">--</span>
+              </div>
               <p id="detail-ticket-desc" style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; margin-top: 8px; white-space: pre-wrap;">--</p>
             </div>
 
-            <!-- Controles Administrativos (Super-Admin / Técnico) -->
-            <div id="admin-controls-section" style="display: none; border-top: 1px solid var(--border-glass); padding-top: 16px; flex-direction: column; gap: 12px; margin-top: 10px;">
-              <span style="font-size: 11px; color: var(--accent-neon); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 4px;">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 15l-4-4 1.41-1.41L10 13.17l5.59-5.59L17 9l-7 7z"/></svg>
-                Controles de Chamado
-              </span>
-              
-              <!-- Tipo -->
+            <!-- Chat Window (preenche a altura restante) -->
+            <div class="chat-window">
+              <div class="chat-header">
+                <h3>Histórico de Interações</h3>
+                <span id="chat-unread-badge" class="chat-unread-counter" style="display: none;"></span>
+              </div>
+
+              <div class="timeline" id="chat-timeline">
+                <!-- Dynamically populated bubble followups -->
+              </div>
+
+              <form class="chat-footer" id="chat-form" onsubmit="submitFollowup(event)">
+                <div class="chat-input-wrapper">
+                  <div id="chat-file-indicator" style="display: none; padding: 6px 12px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass); font-size: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                    <span id="chat-file-name-text">arquivo.jpg</span>
+                    <button type="button" class="btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="removeChatFile()">Remover</button>
+                  </div>
+                  <div style="display: flex; align-items: center; width: 100%;">
+                    <button type="button" class="action-btn" style="width: 44px; height: 44px; border-radius: 10px 0 0 10px; border-right: none;" onclick="triggerChatFileInput()" title="Anexar arquivo">
+                      📎
+                    </button>
+                    <input type="text" id="chat-input-field" placeholder="Digite sua resposta para o técnico..." required autocomplete="off" style="border-radius: 0 10px 10px 0; height: 44px;">
+                    <input type="file" id="chat-file-input" style="display: none;" onchange="handleChatFileSelect(event)">
+                  </div>
+                </div>
+                <button type="submit" class="btn-primary" style="padding: 12px 20px; height: 44px;">Enviar</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- RIGHT: Sidebar de Metadados (30%) -->
+          <div class="ticket-sidebar-panel">
+
+            <!-- Categoria -->
+            <div class="sidebar-section">
+              <span class="sidebar-label">Categoria</span>
+              <div id="detail-ticket-category" style="font-weight: 500; font-size: 13.5px; margin-top: 4px; color: var(--text-primary);">--</div>
+            </div>
+
+            <!-- Solicitante -->
+            <div class="sidebar-section">
+              <span class="sidebar-label">Solicitante</span>
+              <div id="detail-ticket-requester" style="font-weight: 500; font-size: 13.5px; margin-top: 4px; color: var(--text-primary);">--</div>
+            </div>
+
+            <!-- Barra de Progresso -->
+            <div class="sidebar-section">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span class="sidebar-label">Progresso</span>
+                <span id="detail-progress-pct" style="font-size: 11px; font-weight: 700; color: var(--accent-neon);">0%</span>
+              </div>
+              <div class="progress-track">
+                <div id="detail-progress-fill" class="progress-fill"></div>
+              </div>
+              <input type="range" id="detail-progress-slider" class="progress-slider" min="0" max="100" value="0" oninput="handleProgressSliderChange(this.value)">
+            </div>
+
+            <!-- SLA Timer -->
+            <div class="sidebar-section">
+              <span class="sidebar-label">SLA / Prazo</span>
+              <div id="detail-sla-timer" class="sla-badge sla-neutral" style="margin-top: 6px; width: fit-content;">Sem prazo definido</div>
+            </div>
+
+            <!-- Controles Administrativos (Técnico / Super-Admin) -->
+            <div id="admin-controls-section" style="display: none; flex-direction: column; gap: 10px;">
+              <div class="sidebar-section" style="padding-bottom: 10px;">
+                <span style="font-size: 10px; color: var(--accent-neon); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 4px;">
+                  <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 15l-4-4 1.41-1.41L10 13.17l5.59-5.59L17 9l-7 7z"/></svg>
+                  Controles de Chamado
+                </span>
+              </div>
+
               <div class="form-group" style="margin-bottom: 0;">
                 <label for="admin-change-type" style="font-size: 10px; margin-bottom: 6px;">Tipo</label>
                 <select id="admin-change-type" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('type', this.value)">
@@ -372,7 +433,6 @@
                 </select>
               </div>
 
-              <!-- Categoria -->
               <div class="form-group" style="margin-bottom: 0;">
                 <label for="admin-change-category" style="font-size: 10px; margin-bottom: 6px;">Categoria</label>
                 <select id="admin-change-category" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('itilcategories_id', this.value)">
@@ -380,7 +440,6 @@
                 </select>
               </div>
 
-              <!-- Urgência -->
               <div class="form-group" style="margin-bottom: 0;">
                 <label for="admin-change-urgency" style="font-size: 10px; margin-bottom: 6px;">Urgência</label>
                 <select id="admin-change-urgency" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('urgency', this.value)">
@@ -392,7 +451,6 @@
                 </select>
               </div>
 
-              <!-- Localização -->
               <div class="form-group" style="margin-bottom: 0;">
                 <label for="admin-change-location" style="font-size: 10px; margin-bottom: 6px;">Localização</label>
                 <select id="admin-change-location" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('locations_id', this.value)">
@@ -400,7 +458,6 @@
                 </select>
               </div>
 
-              <!-- Alterar Status -->
               <div class="form-group" style="margin-bottom: 0;">
                 <label for="admin-change-status" style="font-size: 10px; margin-bottom: 6px;">Alterar Status</label>
                 <select id="admin-change-status" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('status', this.value)">
@@ -412,42 +469,21 @@
                 </select>
               </div>
 
-              <button class="btn-primary" id="btn-admin-close-ticket" style="background: linear-gradient(135deg, var(--danger), #b91c1c); color: white; width: 100%; justify-content: center; font-size: 12px; padding: 10px; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15); margin-top: 4px;" onclick="closeTicketFromAdmin()">
+              <button class="btn-primary" id="btn-admin-close-ticket" style="background: linear-gradient(135deg, var(--danger), #b91c1c); color: white; width: 100%; justify-content: center; font-size: 12px; padding: 10px; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);" onclick="closeTicketFromAdmin()">
                 Fechar Chamado
               </button>
+
+              <div style="border-bottom: 1px solid var(--border-glass); margin-top: 4px;"></div>
             </div>
 
-          </div>
-
-          <!-- Followup/Chat panel -->
-          <div class="chat-window">
-            <div class="chat-header">
-              <h3>Interações com o Suporte</h3>
-              <button class="btn-secondary" style="font-size: 11px; padding: 6px 12px; gap: 4px;" onclick="generateChatMarkdownSummary()">
-                📄 Copiar Sumário do Chat
-              </button>
-            </div>
-            
-            <div class="timeline" id="chat-timeline">
-              <!-- Dynamically populated bubble followups -->
-            </div>
-
-            <form class="chat-footer" id="chat-form" onsubmit="submitFollowup(event)">
-              <div class="chat-input-wrapper">
-                <div id="chat-file-indicator" style="display: none; padding: 6px 12px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass); font-size: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-                  <span id="chat-file-name-text">arquivo.jpg</span>
-                  <button type="button" class="btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="removeChatFile()">Remover</button>
-                </div>
-                <div style="display: flex; align-items: center; width: 100%;">
-                  <button type="button" class="action-btn" style="width: 44px; height: 44px; border-radius: 10px 0 0 10px; border-right: none;" onclick="triggerChatFileInput()" title="Anexar arquivo">
-                    📎
-                  </button>
-                  <input type="text" id="chat-input-field" placeholder="Digite sua resposta para o técnico..." required autocomplete="off" style="border-radius: 0 10px 10px 0; height: 44px;">
-                  <input type="file" id="chat-file-input" style="display: none;" onchange="handleChatFileSelect(event)">
-                </div>
+            <!-- Histórico do Solicitante -->
+            <div class="sidebar-section" style="border-bottom: none;">
+              <span class="sidebar-label">Histórico do Solicitante</span>
+              <div id="customer-history-list" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                <span style="color: var(--text-muted); font-size: 12px;">Carregando...</span>
               </div>
-              <button type="submit" class="btn-primary" style="padding: 12px 20px; height: 44px;">Enviar</button>
-            </form>
+            </div>
+
           </div>
         </div>
       </section>
@@ -716,6 +752,61 @@
     </div>
 
   </main>
+
+  <!-- MODAL: QUICK ADD TICKET -->
+  <div id="quick-add-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-box" style="max-width: 500px;">
+      <h3>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="vertical-align: middle; margin-right: 6px; color: var(--accent-neon);"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        Novo Chamado Rápido
+      </h3>
+      <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; line-height: 1.5;">Preencha os dados essenciais. Para mais opções use o formulário completo.</p>
+
+      <form id="quick-add-form" onsubmit="submitQuickAddTicket(event)" style="display: flex; flex-direction: column; gap: 14px;">
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="quick-title" style="font-size: 13px; margin-bottom: 6px;">Assunto <span style="color: var(--danger);">*</span></label>
+          <input type="text" id="quick-title" class="form-control" placeholder="Descreva o problema brevemente..." required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="quick-category" style="font-size: 13px; margin-bottom: 6px;">Categoria <span style="color: var(--danger);">*</span></label>
+            <select id="quick-category" class="form-control" required>
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="quick-urgency" style="font-size: 13px; margin-bottom: 6px;">Urgência</label>
+            <select id="quick-urgency" class="form-control">
+              <option value="3">Média</option>
+              <option value="1">Muito Baixa</option>
+              <option value="2">Baixa</option>
+              <option value="4">Alta</option>
+              <option value="5">Muito Alta</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="quick-desc" style="font-size: 13px; margin-bottom: 6px;">Descrição <span style="color: var(--danger);">*</span></label>
+          <textarea id="quick-desc" class="form-control" rows="3" placeholder="Detalhes adicionais sobre o problema..." required style="resize: vertical; min-height: 80px;"></textarea>
+        </div>
+
+        <div id="quick-add-error" style="display: none; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #f87171;"></div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; flex-wrap: wrap; gap: 10px;">
+          <button type="button" class="btn-secondary" style="font-size: 12px;" onclick="closeQuickAddModal(); switchScreen('new-ticket')">
+            Formulário Completo →
+          </button>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn-secondary" onclick="closeQuickAddModal()">Cancelar</button>
+            <button type="submit" id="quick-add-submit-btn" class="btn-primary" style="min-width: 130px;">Abrir Chamado</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- MODAL: REMOTE ACCESS CHECKLIST -->
   <div id="remote-checklist-modal" class="modal-overlay" style="display: none;">
