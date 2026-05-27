@@ -19,6 +19,7 @@ import { initializePaymentMethods, initializeSubscriptions, initializePaymentHis
 import { initializeAnalytics, renderAnalyticsDashboard, renderCustomReports, getAnalyticsMetrics, deleteCustomReport } from './analytics.js';
 import { initializeIntelligence, renderIntelligenceDashboard, intelligentCategorize, analyzeSentiment, suggestResponses, predictBestTechnician, detectAnomalies } from './intelligence.js';
 import { initializeAPIManagement, renderAPIKeys, renderWebhooks, renderIntegrations, renderAPILogs, createAPIKey, revokeAPIKey, createWebhook, deleteWebhook, toggleWebhook, toggleIntegration, updateIntegrationConfig } from './api-management.js';
+import { initializeCompliance, renderAuditLogs, renderSecurityEvents, renderDataRetention, renderComplianceStatus, logAuditEvent, logUserActivity, logSecurityEvent, getCompliancePolicies, getAuditLogs } from './compliance.js';
 import { checkAndPromptLogin } from './auth.js';
 
 // Inicializador Central
@@ -140,6 +141,11 @@ function setupInitialUI() {
   renderWebhooks();
   renderIntegrations();
   renderAPILogs();
+  initializeCompliance();
+  renderComplianceStatus();
+  renderSecurityEvents();
+  renderDataRetention();
+  renderAuditLogs();
 }
 
 /**
@@ -393,6 +399,13 @@ window.revokeAPIKey = revokeAPIKey;
 window.deleteWebhook = deleteWebhook;
 window.toggleWebhook = toggleWebhook;
 window.toggleIntegration = toggleIntegration;
+window.renderAuditLogs = renderAuditLogs;
+window.renderSecurityEvents = renderSecurityEvents;
+window.renderDataRetention = renderDataRetention;
+window.renderComplianceStatus = renderComplianceStatus;
+window.logAuditEvent = logAuditEvent;
+window.logUserActivity = logUserActivity;
+window.logSecurityEvent = logSecurityEvent;
 
 // Placeholder for charge rate editing
 window.editChargeRate = (key) => {
