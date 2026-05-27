@@ -16,6 +16,7 @@ import { initializePortal, renderPortalSetup, renderKnowledgeBase, togglePortalF
 import { loadAgentSettingsIntoForm, saveAgentSettings, testAllConnections, handleFontScaleChange, handleCompactModeChange, checkUpdatesSilently, checkUpdatesManually, startUpdateWorkflow, dismissUpdateBanner, closeChangelogModal, loadSLASettings, saveSLASettings, getSLATimeForTicket } from './settings.js';
 import { initializeBilling, renderInvoicesList, renderBillingPlans, renderChargeRates, markInvoiceAsPaid, exportInvoiceAsCSV, createInvoice, generateInvoiceFromTickets } from './billing.js';
 import { initializePaymentMethods, initializeSubscriptions, initializePaymentHistory, renderPaymentMethods, renderSubscriptions, renderPaymentHistory, removePaymentMethod, setDefaultPaymentMethod, cancelSubscription } from './payment.js';
+import { initializeAnalytics, renderAnalyticsDashboard, renderCustomReports, getAnalyticsMetrics, deleteCustomReport } from './analytics.js';
 import { checkAndPromptLogin } from './auth.js';
 
 // Inicializador Central
@@ -127,6 +128,9 @@ function setupInitialUI() {
   renderPaymentMethods();
   renderSubscriptions();
   renderPaymentHistory();
+  initializeAnalytics();
+  renderAnalyticsDashboard();
+  renderCustomReports();
 }
 
 /**
@@ -362,6 +366,10 @@ window.renderPaymentMethods = renderPaymentMethods;
 window.renderSubscriptions = renderSubscriptions;
 window.renderPaymentHistory = renderPaymentHistory;
 window.cancelSubscription = cancelSubscription;
+window.renderAnalyticsDashboard = renderAnalyticsDashboard;
+window.renderCustomReports = renderCustomReports;
+window.deleteCustomReport = deleteCustomReport;
+window.getAnalyticsMetrics = getAnalyticsMetrics;
 
 // Placeholder for charge rate editing
 window.editChargeRate = (key) => {
@@ -382,6 +390,22 @@ window.openAddPaymentMethodModal = () => {
   const type = prompt('Tipo de pagamento (credit-card, bank-transfer, pix):', 'credit-card');
   if (type) {
     alert('Modal de adição de método de pagamento - Implementação de UI completa pendente');
+  }
+};
+
+// Placeholder for creating custom report
+window.openCreateReportModal = () => {
+  const reportName = prompt('Nome do relatório:', 'Meu Relatório');
+  if (reportName) {
+    alert('Modal de criação de relatório customizado - Implementação de UI completa pendente');
+  }
+};
+
+// Placeholder for scheduling report
+window.openScheduleReportModal = () => {
+  const frequency = prompt('Frequência (daily, weekly, monthly):', 'weekly');
+  if (frequency) {
+    alert('Modal de agendamento de relatório - Implementação de UI completa pendente');
   }
 };
 
