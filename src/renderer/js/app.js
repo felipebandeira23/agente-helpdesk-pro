@@ -10,6 +10,7 @@ import { viewTicketDetails, submitFollowup, triggerChatFileInput, handleChatFile
 import { openRemoteChecklistModal, closeRemoteChecklistModal, confirmRemoteChecklist, evaluateRemoteChecklistProgress } from './mesh.js';
 import { loadAssets, renderAssetsTable, filterAssetsTable, resetAssetsFilters, viewAssetDetails } from './assets.js';
 import { generateReport, displayReportPreview, exportReportAsCSV, printReport } from './reports.js';
+import { loadAutomationRules, renderAutomationRules, toggleAutomationRule, deleteAutomationRule } from './automation.js';
 import { loadAgentSettingsIntoForm, saveAgentSettings, testAllConnections, handleFontScaleChange, handleCompactModeChange, checkUpdatesSilently, checkUpdatesManually, startUpdateWorkflow, dismissUpdateBanner, closeChangelogModal, loadSLASettings, saveSLASettings, getSLATimeForTicket } from './settings.js';
 import { checkAndPromptLogin } from './auth.js';
 
@@ -101,9 +102,11 @@ function setupInitialUI() {
     setTimeout(checkUpdatesSilently, 4000);
   }
 
-  // Carrega configurações do GLPI e SLA
+  // Carrega configurações do GLPI, SLA e Automação
   loadAgentSettingsIntoForm();
   loadSLASettings();
+  loadAutomationRules();
+  renderAutomationRules();
 }
 
 /**
@@ -511,3 +514,20 @@ window.generateAndDisplayReport = function(reportType) {
 
 window.exportReportAsCSV = exportReportAsCSV;
 window.printReport = printReport;
+
+// Sprint 2.1: Automation global functions
+window.toggleAutomationRule = function(ruleId) {
+  const enabled = toggleAutomationRule(ruleId);
+  renderAutomationRules();
+};
+
+window.deleteAutomationRule = function(ruleId) {
+  if (confirm('Tem certeza que deseja deletar esta regra?')) {
+    deleteAutomationRule(ruleId);
+    renderAutomationRules();
+  }
+};
+
+window.openCreateRuleModal = function() {
+  alert('Criação de novas regras virá em breve com UI aprimorada.');
+};
