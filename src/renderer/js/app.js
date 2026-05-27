@@ -17,6 +17,7 @@ import { loadAgentSettingsIntoForm, saveAgentSettings, testAllConnections, handl
 import { initializeBilling, renderInvoicesList, renderBillingPlans, renderChargeRates, markInvoiceAsPaid, exportInvoiceAsCSV, createInvoice, generateInvoiceFromTickets } from './billing.js';
 import { initializePaymentMethods, initializeSubscriptions, initializePaymentHistory, renderPaymentMethods, renderSubscriptions, renderPaymentHistory, removePaymentMethod, setDefaultPaymentMethod, cancelSubscription } from './payment.js';
 import { initializeAnalytics, renderAnalyticsDashboard, renderCustomReports, getAnalyticsMetrics, deleteCustomReport } from './analytics.js';
+import { initializeIntelligence, renderIntelligenceDashboard, intelligentCategorize, analyzeSentiment, suggestResponses, predictBestTechnician, detectAnomalies } from './intelligence.js';
 import { checkAndPromptLogin } from './auth.js';
 
 // Inicializador Central
@@ -131,6 +132,8 @@ function setupInitialUI() {
   initializeAnalytics();
   renderAnalyticsDashboard();
   renderCustomReports();
+  initializeIntelligence();
+  renderIntelligenceDashboard();
 }
 
 /**
@@ -370,6 +373,12 @@ window.renderAnalyticsDashboard = renderAnalyticsDashboard;
 window.renderCustomReports = renderCustomReports;
 window.deleteCustomReport = deleteCustomReport;
 window.getAnalyticsMetrics = getAnalyticsMetrics;
+window.renderIntelligenceDashboard = renderIntelligenceDashboard;
+window.intelligentCategorize = intelligentCategorize;
+window.analyzeSentiment = analyzeSentiment;
+window.suggestResponses = suggestResponses;
+window.predictBestTechnician = predictBestTechnician;
+window.detectAnomalies = detectAnomalies;
 
 // Placeholder for charge rate editing
 window.editChargeRate = (key) => {
