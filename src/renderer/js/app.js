@@ -14,6 +14,7 @@ import { loadAutomationRules, renderAutomationRules, toggleAutomationRule, delet
 import { initializeChannels, renderChannelConfig, renderChannelStatus, toggleChannel } from './multichannel.js';
 import { initializePortal, renderPortalSetup, renderKnowledgeBase, togglePortalFeature } from './portal.js';
 import { loadAgentSettingsIntoForm, saveAgentSettings, testAllConnections, handleFontScaleChange, handleCompactModeChange, checkUpdatesSilently, checkUpdatesManually, startUpdateWorkflow, dismissUpdateBanner, closeChangelogModal, loadSLASettings, saveSLASettings, getSLATimeForTicket } from './settings.js';
+import { initializeBilling, renderInvoicesList, renderBillingPlans, renderChargeRates, markInvoiceAsPaid, exportInvoiceAsCSV, createInvoice, generateInvoiceFromTickets } from './billing.js';
 import { checkAndPromptLogin } from './auth.js';
 
 // Inicializador Central
@@ -104,7 +105,7 @@ function setupInitialUI() {
     setTimeout(checkUpdatesSilently, 4000);
   }
 
-  // Carrega configurações do GLPI, SLA, Automação, Multi-canal e Portal
+  // Carrega configurações do GLPI, SLA, Automação, Multi-canal, Portal e Faturamento
   loadAgentSettingsIntoForm();
   loadSLASettings();
   loadAutomationRules();
@@ -115,6 +116,10 @@ function setupInitialUI() {
   initializePortal();
   renderPortalSetup();
   renderKnowledgeBase();
+  initializeBilling();
+  renderInvoicesList();
+  renderBillingPlans();
+  renderChargeRates();
 }
 
 /**
@@ -337,6 +342,27 @@ window.checkUpdatesManually = checkUpdatesManually;
 window.dismissUpdateBanner = dismissUpdateBanner;
 window.closeChangelogModal = closeChangelogModal;
 window.startUpdateWorkflow = startUpdateWorkflow;
+window.markInvoiceAsPaid = markInvoiceAsPaid;
+window.exportInvoices = exportInvoiceAsCSV;
+window.generateNewInvoice = createInvoice;
+window.generateInvoiceFromTickets = generateInvoiceFromTickets;
+window.renderInvoicesList = renderInvoicesList;
+window.renderBillingPlans = renderBillingPlans;
+window.renderChargeRates = renderChargeRates;
+
+// Placeholder for charge rate editing
+window.editChargeRate = (key) => {
+  const newValue = prompt(`Digite o novo valor para ${key}:`, '');
+  if (newValue && !isNaN(newValue)) {
+    const rates = { 'per-ticket': 25.00, 'per-hour': 150.00, 'additional-user': 49.90 };
+    rates[key] = parseFloat(newValue);
+    localStorage.setItem('billing-data', JSON.stringify({
+      invoices: JSON.parse(localStorage.getItem('billing-data') || '{}').invoices || [],
+      chargeRates: rates
+    }));
+    renderChargeRates();
+  }
+};
 
 // Métricas de Telemetria triggers
 window.triggerTelemetryFetch = async () => {
