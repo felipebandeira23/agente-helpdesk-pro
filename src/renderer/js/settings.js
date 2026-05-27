@@ -124,6 +124,134 @@ export function handleCompactModeChange(enabled) {
   applyCompactMode(enabled);
 }
 
+export function loadSLASettings() {
+  const globalSlaInput = document.getElementById('sla-config-global');
+  const categoryTableBody = document.getElementById('sla-config-category-tbody');
+  const priorityTableBody = document.getElementById('sla-config-priority-tbody');
+
+  // Carrega SLA global (em horas)
+  const globalSla = localStorage.getItem('sla-config-global') || '24';
+  if (globalSlaInput) globalSlaInput.value = globalSla;
+
+  // Carrega SLA por categoria
+  if (categoryTableBody && State.categoriesList) {
+    categoryTableBody.innerHTML = '';
+    State.categoriesList.forEach(cat => {
+      const storedSla = localStorage.getItem(`sla-config-category-${cat.id}`) || '';
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td style="font-weight: 500;">${escapeHtml(cat.name)}</td>
+        <td>
+          <input type="number" class="form-control" style="width: 100px; margin-bottom: 0;"
+                 value="${storedSla}"
+                 data-category-id="${cat.id}"
+                 placeholder="Global"
+                 min="1" step="1">
+        </td>
+        <td>
+          <small style="color: var(--text-muted);">horas</small>
+        </td>
+      `;
+      categoryTableBody.appendChild(row);
+    });
+  }
+
+  // Carrega SLA por prioridade
+  if (priorityTableBody) {
+    const priorityLevels = [
+      { id: 1, name: 'Baixa' },
+      { id: 3, name: 'Média' },
+      { id: 5, name: 'Alta' },
+      { id: 6, name: 'Urgente' }
+    ];
+    priorityTableBody.innerHTML = '';
+    priorityLevels.forEach(priority => {
+      const storedSla = localStorage.getItem(`sla-config-priority-${priority.id}`) || '';
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td style="font-weight: 500;">${priority.name}</td>
+        <td>
+          <input type="number" class="form-control" style="width: 100px; margin-bottom: 0;"
+                 value="${storedSla}"
+                 data-priority-id="${priority.id}"
+                 placeholder="Global"
+                 min="1" step="1">
+        </td>
+        <td>
+          <small style="color: var(--text-muted);">horas</small>
+        </td>
+      `;
+      priorityTableBody.appendChild(row);
+    });
+  }
+}
+
+export function saveSLASettings(event) {
+  if (event) event.preventDefault();
+
+  // Salva SLA global
+  const globalSlaInput = document.getElementById('sla-config-global');
+  if (globalSlaInput && globalSlaInput.value) {
+    localStorage.setItem('sla-config-global', globalSlaInput.value);
+  }
+
+  // Salva SLA por categoria
+  document.querySelectorAll('[data-category-id]').forEach(input => {
+    const categoryId = input.getAttribute('data-category-id');
+    const value = input.value.trim();
+    if (value) {
+      localStorage.setItem(`sla-config-category-${categoryId}`, value);
+    } else {
+      localStorage.removeItem(`sla-config-category-${categoryId}`);
+    }
+  });
+
+  // Salva SLA por prioridade
+  document.querySelectorAll('[data-priority-id]').forEach(input => {
+    const priorityId = input.getAttribute('data-priority-id');
+    const value = input.value.trim();
+    if (value) {
+      localStorage.setItem(`sla-config-priority-${priorityId}`, value);
+    } else {
+      localStorage.removeItem(`sla-config-priority-${priorityId}`);
+    }
+  });
+
+  alert('Configurações SLA salvas com sucesso!');
+}
+
+export function getSLATimeForTicket(ticket) {
+  // Busca SLA específico por categoria e prioridade, após global
+  const categoryId = ticket.category_id;
+  const priorityId = ticket.urgency;
+
+  // Tenta categoria + prioridade (maior especificidade)
+  const categoryPrioritySla = localStorage.getItem(`sla-config-category-${categoryId}-priority-${priorityId}`);
+  if (categoryPrioritySla) return parseInt(categoryPrioritySla) * 3600 * 1000;
+
+  // Tenta só categoria
+  const categorySla = localStorage.getItem(`sla-config-category-${categoryId}`);
+  if (categorySla) return parseInt(categorySla) * 3600 * 1000;
+
+  // Tenta só prioridade
+  const prioritySla = localStorage.getItem(`sla-config-priority-${priorityId}`);
+  if (prioritySla) return parseInt(prioritySla) * 3600 * 1000;
+
+  // Usa global (padrão 24 horas)
+  const globalSla = localStorage.getItem('sla-config-global') || '24';
+  return parseInt(globalSla) * 3600 * 1000;
+}
+
+function escapeHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // Lógica do Auto-Updater e Changelog modal
 let updateInfoCache = null;
 let updateDownloadProgressSubscription = null;

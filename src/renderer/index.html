@@ -766,6 +766,62 @@
           </form>
         </div>
 
+        <!-- SLA Configuration Card (Sprint 1.1) -->
+        <div class="card" style="max-width: 700px; margin: 24px auto 0 auto; display: flex; flex-direction: column; gap: 18px;">
+          <div style="border-bottom: 1px solid var(--border-glass); padding-bottom: 12px;">
+            <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="color: var(--accent-neon);"><path d="M11.99 5V1h-1v4H8.01V1H7v4H3.5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h17c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.5V1h-1v4h-3.01zM3.5 7H21v14H3.5V7z"/></svg>
+              Configuração de SLA (Sprint 1.1)
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Defina prazos de resolução por categoria e prioridade.</p>
+          </div>
+
+          <form id="sla-config-form" onsubmit="saveSLASettings(event)" style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+              <label for="sla-config-global" style="font-size: 13.5px; font-weight: 500; color: var(--text-primary);">SLA Global (em horas)</label>
+              <input type="number" id="sla-config-global" class="form-control" placeholder="24" min="1" step="1" value="24" required>
+              <span style="font-size: 11px; color: var(--text-muted);">Prazo padrão para todos os chamados (padrão: 24 horas)</span>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-glass); padding-top: 16px;">
+              <h4 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">SLA por Categoria</h4>
+              <table class="table-container" style="width: 100%; font-size: 13px;">
+                <thead>
+                  <tr>
+                    <th>Categoria</th>
+                    <th style="width: 120px;">Tempo (horas)</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="sla-config-category-tbody">
+                  <tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 12px;">Carregando categorias...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-glass); padding-top: 16px;">
+              <h4 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">SLA por Prioridade</h4>
+              <table class="table-container" style="width: 100%; font-size: 13px;">
+                <thead>
+                  <tr>
+                    <th>Prioridade</th>
+                    <th style="width: 120px;">Tempo (horas)</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="sla-config-priority-tbody">
+                  <tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 12px;">Carregando prioridades...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 10px; border-top: 1px solid var(--border-glass); padding-top: 20px;">
+              <button type="submit" class="btn-primary" style="padding: 12px 24px; font-size: 13.5px;">Salvar SLA</button>
+              <button type="button" class="btn-secondary" onclick="loadSLASettings()" style="padding: 12px 24px; font-size: 13.5px;">Recarregar Padrões</button>
+            </div>
+          </form>
+        </div>
+
         <!-- SCREEN: SETTINGS (ABOUT & UPDATES CARD) -->
         <div class="card" style="max-width: 700px; margin: 24px auto 0 auto; display: flex; flex-direction: column; gap: 18px;">
           <div style="border-bottom: 1px solid var(--border-glass); padding-bottom: 12px;">
