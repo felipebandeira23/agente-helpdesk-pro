@@ -15,6 +15,7 @@ import { initializeChannels, renderChannelConfig, renderChannelStatus, toggleCha
 import { initializePortal, renderPortalSetup, renderKnowledgeBase, togglePortalFeature } from './portal.js';
 import { loadAgentSettingsIntoForm, saveAgentSettings, testAllConnections, handleFontScaleChange, handleCompactModeChange, checkUpdatesSilently, checkUpdatesManually, startUpdateWorkflow, dismissUpdateBanner, closeChangelogModal, loadSLASettings, saveSLASettings, getSLATimeForTicket } from './settings.js';
 import { initializeBilling, renderInvoicesList, renderBillingPlans, renderChargeRates, markInvoiceAsPaid, exportInvoiceAsCSV, createInvoice, generateInvoiceFromTickets } from './billing.js';
+import { initializePaymentMethods, initializeSubscriptions, initializePaymentHistory, renderPaymentMethods, renderSubscriptions, renderPaymentHistory, removePaymentMethod, setDefaultPaymentMethod, cancelSubscription } from './payment.js';
 import { checkAndPromptLogin } from './auth.js';
 
 // Inicializador Central
@@ -120,6 +121,12 @@ function setupInitialUI() {
   renderInvoicesList();
   renderBillingPlans();
   renderChargeRates();
+  initializePaymentMethods();
+  initializeSubscriptions();
+  initializePaymentHistory();
+  renderPaymentMethods();
+  renderSubscriptions();
+  renderPaymentHistory();
 }
 
 /**
@@ -349,6 +356,12 @@ window.generateInvoiceFromTickets = generateInvoiceFromTickets;
 window.renderInvoicesList = renderInvoicesList;
 window.renderBillingPlans = renderBillingPlans;
 window.renderChargeRates = renderChargeRates;
+window.removePaymentMethod = removePaymentMethod;
+window.setDefaultPaymentMethod = setDefaultPaymentMethod;
+window.renderPaymentMethods = renderPaymentMethods;
+window.renderSubscriptions = renderSubscriptions;
+window.renderPaymentHistory = renderPaymentHistory;
+window.cancelSubscription = cancelSubscription;
 
 // Placeholder for charge rate editing
 window.editChargeRate = (key) => {
@@ -361,6 +374,14 @@ window.editChargeRate = (key) => {
       chargeRates: rates
     }));
     renderChargeRates();
+  }
+};
+
+// Placeholder for adding payment method
+window.openAddPaymentMethodModal = () => {
+  const type = prompt('Tipo de pagamento (credit-card, bank-transfer, pix):', 'credit-card');
+  if (type) {
+    alert('Modal de adição de método de pagamento - Implementação de UI completa pendente');
   }
 };
 
