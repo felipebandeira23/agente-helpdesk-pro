@@ -4,7 +4,7 @@
 
 import { State } from './state.js';
 import { switchScreen, applyFontScale, applyCompactMode } from './dom.js';
-import { setupCharts, startTelemetryUpdates, renderDashboardRecentTickets, renderFAQ } from './dashboard.js';
+import { setupCharts, startTelemetryUpdates, renderDashboardRecentTickets, renderFAQ, updateDashboardCharts, renderSLASemaphore } from './dashboard.js';
 import { loadCategories, loadLocations, loadTickets, autoCategorizeTicketTitle, triggerRecurrenceCheck, submitTicket, triggerFileInput, handleFileSelect } from './tickets.js';
 import { viewTicketDetails, submitFollowup, triggerChatFileInput, handleChatFileSelect, removeChatFile, generateChatMarkdownSummary, updateTicketFieldFromAdmin, closeTicketFromAdmin, handleProgressSliderChange, openQuickAddModal, closeQuickAddModal, submitQuickAddTicket } from './chat.js';
 import { openRemoteChecklistModal, closeRemoteChecklistModal, confirmRemoteChecklist, evaluateRemoteChecklistProgress } from './mesh.js';
@@ -56,7 +56,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       await loadCategories();
       await loadLocations();
       await loadTickets();
-      await renderDashboardRecentTickets();
+      renderDashboardRecentTickets();
+      updateDashboardCharts();
+      renderSLASemaphore();
     } catch (err) {
       console.warn('[AUTH] Erro ao recarregar dados após login:', err.message);
     }
@@ -123,6 +125,11 @@ async function checkProxyStatus() {
         await loadLocations();
       }
       await loadTickets();
+
+      // Sprint 1.0: Atualiza gráficos do dashboard
+      updateDashboardCharts();
+      renderSLASemaphore();
+      renderDashboardRecentTickets();
     } else {
       throw new Error('Proxy offline');
     }

@@ -120,6 +120,14 @@
           </button>
         </div>
 
+        <!-- SLA Semaphore Panel (Sprint 1.0) -->
+        <div class="card">
+          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">🚨 Status SLA dos Chamados</h3>
+          <div id="sla-semaphore-container">
+            <div style="text-align: center; color: var(--text-muted); padding: 20px;">Carregando status SLA...</div>
+          </div>
+        </div>
+
         <div class="graphs-row">
           <!-- Quick Status Card -->
           <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
@@ -141,6 +149,25 @@
               <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: var(--font-display); font-size: 16px; font-weight: 800;" id="memMiniText">--%</div>
             </div>
             <span style="font-size: 12px; font-weight: 500; color: var(--text-secondary);" id="memMiniDetail">Calculando métricas...</span>
+          </div>
+        </div>
+
+        <!-- Business Metrics Charts (Sprint 1.0) -->
+        <div class="graphs-row">
+          <!-- Tickets by Status Chart -->
+          <div class="card" style="display: flex; flex-direction: column;">
+            <h3 style="font-family: var(--font-display); font-size: 14px; font-weight: 700; margin-bottom: 16px;">Chamados por Status</h3>
+            <div style="position: relative; height: 250px;">
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Tickets by Origin Chart -->
+          <div class="card" style="display: flex; flex-direction: column;">
+            <h3 style="font-family: var(--font-display); font-size: 14px; font-weight: 700; margin-bottom: 16px;">Chamados por Origem</h3>
+            <div style="position: relative; height: 250px;">
+              <canvas id="originChart"></canvas>
+            </div>
           </div>
         </div>
 
