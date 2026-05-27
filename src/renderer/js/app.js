@@ -8,6 +8,7 @@ import { setupCharts, startTelemetryUpdates, renderDashboardRecentTickets, rende
 import { loadCategories, loadLocations, loadTickets, autoCategorizeTicketTitle, triggerRecurrenceCheck, submitTicket, triggerFileInput, handleFileSelect } from './tickets.js';
 import { viewTicketDetails, submitFollowup, triggerChatFileInput, handleChatFileSelect, removeChatFile, generateChatMarkdownSummary, updateTicketFieldFromAdmin, closeTicketFromAdmin, handleProgressSliderChange, openQuickAddModal, closeQuickAddModal, submitQuickAddTicket } from './chat.js';
 import { openRemoteChecklistModal, closeRemoteChecklistModal, confirmRemoteChecklist, evaluateRemoteChecklistProgress } from './mesh.js';
+import { loadAssets, renderAssetsTable, filterAssetsTable, resetAssetsFilters, viewAssetDetails } from './assets.js';
 import { loadAgentSettingsIntoForm, saveAgentSettings, testAllConnections, handleFontScaleChange, handleCompactModeChange, checkUpdatesSilently, checkUpdatesManually, startUpdateWorkflow, dismissUpdateBanner, closeChangelogModal, loadSLASettings, saveSLASettings, getSLATimeForTicket } from './settings.js';
 import { checkAndPromptLogin } from './auth.js';
 
@@ -130,6 +131,7 @@ async function checkProxyStatus() {
         await loadLocations();
       }
       await loadTickets();
+      await loadAssets();
 
       // Sprint 1.0: Atualiza gráficos do dashboard
       initializeDashboardFilters();
