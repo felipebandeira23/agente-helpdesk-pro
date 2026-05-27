@@ -4,11 +4,22 @@
 
 import { State } from './state.js';
 import { switchScreen, applyFontScale, applyCompactMode } from './dom.js';
-import { setupCharts, startTelemetryUpdates, renderDashboardRecentTickets, renderFAQ } from './dashboard.js';
+import { setupCharts, startTelemetryUpdates, renderDashboardRecentTickets, renderFAQ, updateDashboardCharts, renderSLASemaphore, initializeDashboardFilters, applyDashboardFilters, resetDashboardFilters } from './dashboard.js';
 import { loadCategories, loadLocations, loadTickets, autoCategorizeTicketTitle, triggerRecurrenceCheck, submitTicket, triggerFileInput, handleFileSelect } from './tickets.js';
-import { viewTicketDetails, submitFollowup, triggerChatFileInput, handleChatFileSelect, removeChatFile, generateChatMarkdownSummary } from './chat.js';
+import { viewTicketDetails, submitFollowup, triggerChatFileInput, handleChatFileSelect, removeChatFile, generateChatMarkdownSummary, updateTicketFieldFromAdmin, closeTicketFromAdmin, handleProgressSliderChange, openQuickAddModal, closeQuickAddModal, submitQuickAddTicket } from './chat.js';
 import { openRemoteChecklistModal, closeRemoteChecklistModal, confirmRemoteChecklist, evaluateRemoteChecklistProgress } from './mesh.js';
-import { loadAgentSettingsIntoForm, saveAgentSettings, testAllConnections, handleFontScaleChange, handleCompactModeChange, checkUpdatesSilently, checkUpdatesManually, startUpdateWorkflow, dismissUpdateBanner, closeChangelogModal } from './settings.js';
+import { loadAssets, renderAssetsTable, filterAssetsTable, resetAssetsFilters, viewAssetDetails } from './assets.js';
+import { generateReport, displayReportPreview, exportReportAsCSV, printReport } from './reports.js';
+import { loadAutomationRules, renderAutomationRules, toggleAutomationRule, deleteAutomationRule } from './automation.js';
+import { initializeChannels, renderChannelConfig, renderChannelStatus, toggleChannel } from './multichannel.js';
+import { initializePortal, renderPortalSetup, renderKnowledgeBase, togglePortalFeature } from './portal.js';
+import { loadAgentSettingsIntoForm, saveAgentSettings, testAllConnections, handleFontScaleChange, handleCompactModeChange, checkUpdatesSilently, checkUpdatesManually, startUpdateWorkflow, dismissUpdateBanner, closeChangelogModal, loadSLASettings, saveSLASettings, getSLATimeForTicket } from './settings.js';
+import { initializeBilling, renderInvoicesList, renderBillingPlans, renderChargeRates, markInvoiceAsPaid, exportInvoiceAsCSV, createInvoice, generateInvoiceFromTickets } from './billing.js';
+import { initializePaymentMethods, initializeSubscriptions, initializePaymentHistory, renderPaymentMethods, renderSubscriptions, renderPaymentHistory, removePaymentMethod, setDefaultPaymentMethod, cancelSubscription } from './payment.js';
+import { initializeAnalytics, renderAnalyticsDashboard, renderCustomReports, getAnalyticsMetrics, deleteCustomReport } from './analytics.js';
+import { initializeIntelligence, renderIntelligenceDashboard, intelligentCategorize, analyzeSentiment, suggestResponses, predictBestTechnician, detectAnomalies } from './intelligence.js';
+import { initializeAPIManagement, renderAPIKeys, renderWebhooks, renderIntegrations, renderAPILogs, createAPIKey, revokeAPIKey, createWebhook, deleteWebhook, toggleWebhook, toggleIntegration, updateIntegrationConfig } from './api-management.js';
+import { initializeCompliance, renderAuditLogs, renderSecurityEvents, renderDataRetention, renderComplianceStatus, logAuditEvent, logUserActivity, logSecurityEvent, getCompliancePolicies, getAuditLogs } from './compliance.js';
 import { checkAndPromptLogin } from './auth.js';
 
 // Inicializador Central
@@ -56,7 +67,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       await loadCategories();
       await loadLocations();
       await loadTickets();
-      await renderDashboardRecentTickets();
+      initializeDashboardFilters();
+      renderDashboardRecentTickets();
+      updateDashboardCharts();
+      renderSLASemaphore();
     } catch (err) {
       console.warn('[AUTH] Erro ao recarregar dados após login:', err.message);
     }
@@ -95,6 +109,43 @@ function setupInitialUI() {
     // Checagem silenciosa de updates
     setTimeout(checkUpdatesSilently, 4000);
   }
+
+  // Carrega configurações do GLPI, SLA, Automação, Multi-canal, Portal e Faturamento
+  loadAgentSettingsIntoForm();
+  loadSLASettings();
+  loadAutomationRules();
+  renderAutomationRules();
+  initializeChannels();
+  renderChannelConfig();
+  renderChannelStatus();
+  initializePortal();
+  renderPortalSetup();
+  renderKnowledgeBase();
+  initializeBilling();
+  renderInvoicesList();
+  renderBillingPlans();
+  renderChargeRates();
+  initializePaymentMethods();
+  initializeSubscriptions();
+  initializePaymentHistory();
+  renderPaymentMethods();
+  renderSubscriptions();
+  renderPaymentHistory();
+  initializeAnalytics();
+  renderAnalyticsDashboard();
+  renderCustomReports();
+  initializeIntelligence();
+  renderIntelligenceDashboard();
+  initializeAPIManagement();
+  renderAPIKeys();
+  renderWebhooks();
+  renderIntegrations();
+  renderAPILogs();
+  initializeCompliance();
+  renderComplianceStatus();
+  renderSecurityEvents();
+  renderDataRetention();
+  renderAuditLogs();
 }
 
 /**
@@ -123,6 +174,13 @@ async function checkProxyStatus() {
         await loadLocations();
       }
       await loadTickets();
+      await loadAssets();
+
+      // Sprint 1.0: Atualiza gráficos do dashboard
+      initializeDashboardFilters();
+      updateDashboardCharts();
+      renderSLASemaphore();
+      renderDashboardRecentTickets();
     } else {
       throw new Error('Proxy offline');
     }
@@ -291,6 +349,12 @@ window.triggerChatFileInput = triggerChatFileInput;
 window.handleChatFileSelect = handleChatFileSelect;
 window.removeChatFile = removeChatFile;
 window.generateChatMarkdownSummary = generateChatMarkdownSummary;
+window.updateTicketFieldFromAdmin = updateTicketFieldFromAdmin;
+window.closeTicketFromAdmin = closeTicketFromAdmin;
+window.handleProgressSliderChange = handleProgressSliderChange;
+window.openQuickAddModal = openQuickAddModal;
+window.closeQuickAddModal = closeQuickAddModal;
+window.submitQuickAddTicket = submitQuickAddTicket;
 window.openRemoteChecklistModal = openRemoteChecklistModal;
 window.closeRemoteChecklistModal = closeRemoteChecklistModal;
 window.confirmRemoteChecklist = confirmRemoteChecklist;
@@ -304,6 +368,103 @@ window.checkUpdatesManually = checkUpdatesManually;
 window.dismissUpdateBanner = dismissUpdateBanner;
 window.closeChangelogModal = closeChangelogModal;
 window.startUpdateWorkflow = startUpdateWorkflow;
+window.markInvoiceAsPaid = markInvoiceAsPaid;
+window.exportInvoices = exportInvoiceAsCSV;
+window.generateNewInvoice = createInvoice;
+window.generateInvoiceFromTickets = generateInvoiceFromTickets;
+window.renderInvoicesList = renderInvoicesList;
+window.renderBillingPlans = renderBillingPlans;
+window.renderChargeRates = renderChargeRates;
+window.removePaymentMethod = removePaymentMethod;
+window.setDefaultPaymentMethod = setDefaultPaymentMethod;
+window.renderPaymentMethods = renderPaymentMethods;
+window.renderSubscriptions = renderSubscriptions;
+window.renderPaymentHistory = renderPaymentHistory;
+window.cancelSubscription = cancelSubscription;
+window.renderAnalyticsDashboard = renderAnalyticsDashboard;
+window.renderCustomReports = renderCustomReports;
+window.deleteCustomReport = deleteCustomReport;
+window.getAnalyticsMetrics = getAnalyticsMetrics;
+window.renderIntelligenceDashboard = renderIntelligenceDashboard;
+window.intelligentCategorize = intelligentCategorize;
+window.analyzeSentiment = analyzeSentiment;
+window.suggestResponses = suggestResponses;
+window.predictBestTechnician = predictBestTechnician;
+window.detectAnomalies = detectAnomalies;
+window.renderAPIKeys = renderAPIKeys;
+window.renderWebhooks = renderWebhooks;
+window.renderIntegrations = renderIntegrations;
+window.renderAPILogs = renderAPILogs;
+window.revokeAPIKey = revokeAPIKey;
+window.deleteWebhook = deleteWebhook;
+window.toggleWebhook = toggleWebhook;
+window.toggleIntegration = toggleIntegration;
+window.renderAuditLogs = renderAuditLogs;
+window.renderSecurityEvents = renderSecurityEvents;
+window.renderDataRetention = renderDataRetention;
+window.renderComplianceStatus = renderComplianceStatus;
+window.logAuditEvent = logAuditEvent;
+window.logUserActivity = logUserActivity;
+window.logSecurityEvent = logSecurityEvent;
+
+// Placeholder for charge rate editing
+window.editChargeRate = (key) => {
+  const newValue = prompt(`Digite o novo valor para ${key}:`, '');
+  if (newValue && !isNaN(newValue)) {
+    const rates = { 'per-ticket': 25.00, 'per-hour': 150.00, 'additional-user': 49.90 };
+    rates[key] = parseFloat(newValue);
+    localStorage.setItem('billing-data', JSON.stringify({
+      invoices: JSON.parse(localStorage.getItem('billing-data') || '{}').invoices || [],
+      chargeRates: rates
+    }));
+    renderChargeRates();
+  }
+};
+
+// Placeholder for adding payment method
+window.openAddPaymentMethodModal = () => {
+  const type = prompt('Tipo de pagamento (credit-card, bank-transfer, pix):', 'credit-card');
+  if (type) {
+    alert('Modal de adição de método de pagamento - Implementação de UI completa pendente');
+  }
+};
+
+// Placeholder for creating custom report
+window.openCreateReportModal = () => {
+  const reportName = prompt('Nome do relatório:', 'Meu Relatório');
+  if (reportName) {
+    alert('Modal de criação de relatório customizado - Implementação de UI completa pendente');
+  }
+};
+
+// Placeholder for scheduling report
+window.openScheduleReportModal = () => {
+  const frequency = prompt('Frequência (daily, weekly, monthly):', 'weekly');
+  if (frequency) {
+    alert('Modal de agendamento de relatório - Implementação de UI completa pendente');
+  }
+};
+
+// Placeholder for creating API key
+window.openCreateAPIKeyModal = () => {
+  const keyName = prompt('Nome da chave de API:', 'Nova Chave');
+  if (keyName) {
+    alert('Modal de criação de chave de API - Implementação de UI completa pendente');
+  }
+};
+
+// Placeholder for creating webhook
+window.openCreateWebhookModal = () => {
+  const webhookName = prompt('Nome do webhook:', 'Meu Webhook');
+  if (webhookName) {
+    alert('Modal de criação de webhook - Implementação de UI completa pendente');
+  }
+};
+
+// Placeholder for integration config
+window.openIntegrationConfig = (integrationId) => {
+  alert('Modal de configuração de integração - Implementação de UI completa pendente');
+};
 
 // Métricas de Telemetria triggers
 window.triggerTelemetryFetch = async () => {
@@ -476,4 +637,77 @@ window.forceInventorySync = async () => {
       `;
     }
   }
+};
+
+// Sprint 2.0: Reports and Automation global functions
+window.generateAndDisplayReport = function(reportType) {
+  const dateRange = document.getElementById('report-date-range')?.value || 'week';
+  const report = generateReport(reportType, dateRange);
+  if (report) {
+    displayReportPreview(report);
+  }
+};
+
+window.exportReportAsCSV = exportReportAsCSV;
+window.printReport = printReport;
+
+// Sprint 2.1: Automation global functions
+window.toggleAutomationRule = function(ruleId) {
+  const enabled = toggleAutomationRule(ruleId);
+  renderAutomationRules();
+};
+
+window.deleteAutomationRule = function(ruleId) {
+  if (confirm('Tem certeza que deseja deletar esta regra?')) {
+    deleteAutomationRule(ruleId);
+    renderAutomationRules();
+  }
+};
+
+window.openCreateRuleModal = function() {
+  alert('Criação de novas regras virá em breve com UI aprimorada.');
+};
+
+// Sprint 3.0: Multichannel global functions
+window.toggleMultichannelChannel = function(channelId) {
+  const enabled = toggleChannel(channelId);
+  renderChannelConfig();
+  renderChannelStatus();
+  if (enabled) {
+    console.log(`[MULTICHANNEL] Canal ativado com sucesso`);
+  }
+};
+
+window.openChannelConfigModal = function(channelId) {
+  alert('Configuração de canais virá em breve com UI aprimorada.');
+};
+
+// Sprint 3.1: Portal global functions
+window.copyPortalLink = function() {
+  const input = document.querySelector('[value*="helpdesk.example.com/portal"]');
+  if (input) {
+    input.select();
+    document.execCommand('copy');
+    alert('Link copiado para a área de transferência!');
+  }
+};
+
+window.togglePortalFeature = function(feature) {
+  togglePortalFeature(feature);
+  renderPortalSetup();
+};
+
+window.updatePortalRequiresLogin = function(value) {
+  const settings = { requiresLogin: value };
+  const module = { updatePortalSettings };
+  Object.keys(module).forEach(key => {
+    if (typeof window[key] !== 'function') {
+      window[key] = module[key];
+    }
+  });
+};
+
+window.updatePortalTimeout = function(minutes) {
+  // This will be connected to actual portal settings update
+  console.log(`Timeout de sessão atualizado para: ${minutes} minutos`);
 };

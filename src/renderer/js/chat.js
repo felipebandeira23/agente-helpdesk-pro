@@ -1,5 +1,6 @@
 /**
  * chat.js — Chat do Chamado, Timeline de Eventos, Upload de Anexos, Resumo em Markdown e Polling Focado
+ * Sprint 0.5: Split Layout 70/30, Progress Bar, SLA Timer, Customer History, Quick-Add Modal, Admin Controls
  */
 
 import { State } from './state.js';
@@ -7,6 +8,7 @@ import { escapeHtml, switchScreen } from './dom.js';
 import { loadTickets } from './tickets.js';
 
 let chatAttachedFile = null;
+let slaTimerInterval = null;
 
 export function triggerChatFileInput() {
   const input = document.getElementById('chat-file-input');
@@ -84,12 +86,14 @@ function updateTicketDetailsUI(ticket) {
   const catEl = document.getElementById('detail-ticket-category');
   const descEl = document.getElementById('detail-ticket-desc');
   const dateEl = document.getElementById('detail-ticket-date');
+  const requesterEl = document.getElementById('detail-ticket-requester');
 
   if (idEl) idEl.textContent = `#${ticket.id}`;
   if (titleEl) titleEl.textContent = ticket.name;
   if (catEl) catEl.textContent = ticket.category_name || 'Geral / Suporte';
   if (descEl) descEl.innerHTML = ticket.content || '<em>Sem descrição fornecida.</em>';
   if (dateEl) dateEl.textContent = ticket.date_creation || 'Não disponível';
+  if (requesterEl) requesterEl.textContent = ticket.user_name || 'Desconhecido';
 
   // Urgência
   const prioEl = document.getElementById('detail-ticket-priority');
@@ -123,12 +127,26 @@ function updateTicketDetailsUI(ticket) {
     `;
   }
 
+  // Barra de progresso (persistida em localStorage)
+  const savedPct = parseInt(localStorage.getItem(`ticket-progress-${ticket.id}`)) || 0;
+  updateProgressBar(savedPct);
+  const slider = document.getElementById('detail-progress-slider');
+  if (slider) slider.value = String(savedPct);
+
+  // SLA Timer
+  if (slaTimerInterval) clearInterval(slaTimerInterval);
+  displaySlaTimer(ticket);
+  slaTimerInterval = setInterval(() => displaySlaTimer(ticket), 60000);
+
   // Seções Administrativas
   const adminSection = document.getElementById('admin-controls-section');
   if (adminSection) {
     if (State.userRoles.isSuperAdmin || State.userRoles.isTecnico) {
       adminSection.style.display = 'flex';
-      
+
+      // Exibe o slider de progresso para técnicos
+      if (slider) slider.style.display = 'block';
+
       const statusSelect = document.getElementById('admin-change-status');
       if (statusSelect) {
         let val = parseInt(ticket.status);
@@ -147,7 +165,7 @@ function updateTicketDetailsUI(ticket) {
 
       const locSelect = document.getElementById('admin-change-location');
       if (locSelect && ticket.locations_id) locSelect.value = String(ticket.locations_id);
-      
+
       const closeBtn = document.getElementById('btn-admin-close-ticket');
       if (closeBtn) {
         if (parseInt(ticket.status) === 6) {
@@ -163,6 +181,267 @@ function updateTicketDetailsUI(ticket) {
     } else {
       adminSection.style.display = 'none';
     }
+  }
+
+  // Histórico do solicitante (async)
+  loadCustomerHistory(ticket);
+}
+
+/**
+ * Atualiza a barra de progresso visual
+ */
+function updateProgressBar(pct) {
+  const fill = document.getElementById('detail-progress-fill');
+  const label = document.getElementById('detail-progress-pct');
+  if (fill) fill.style.width = `${pct}%`;
+  if (label) label.textContent = `${pct}%`;
+}
+
+/**
+ * Handler do slider de progresso — chamado pelo oninput do input range
+ */
+export function handleProgressSliderChange(value) {
+  const pct = parseInt(value);
+  updateProgressBar(pct);
+  localStorage.setItem(`ticket-progress-${State.activeTicketId}`, String(pct));
+}
+
+/**
+ * Calcula e exibe o timer de SLA
+ */
+function displaySlaTimer(ticket) {
+  const slaEl = document.getElementById('detail-sla-timer');
+  if (!slaEl) return;
+
+  const timeToResolve = ticket.time_to_resolve;
+  if (!timeToResolve || timeToResolve === '0000-00-00 00:00:00' || timeToResolve === null) {
+    slaEl.textContent = 'Sem prazo definido';
+    slaEl.className = 'sla-badge sla-neutral';
+    return;
+  }
+
+  const deadline = new Date(timeToResolve);
+  const now = new Date();
+  const diffMs = deadline - now;
+  const diffHours = diffMs / (1000 * 60 * 60);
+
+  if (diffMs <= 0) {
+    slaEl.textContent = `⚠ SLA estourado há ${formatDuration(Math.abs(diffMs))}`;
+    slaEl.className = 'sla-badge sla-critical';
+  } else if (diffHours < 4) {
+    slaEl.textContent = `⏰ Vence em ${formatDuration(diffMs)}`;
+    slaEl.className = 'sla-badge sla-warning';
+  } else {
+    slaEl.textContent = `✓ ${formatDuration(diffMs)} restantes`;
+    slaEl.className = 'sla-badge sla-ok';
+  }
+}
+
+function formatDuration(ms) {
+  const totalMin = Math.floor(ms / 60000);
+  const hours = Math.floor(totalMin / 60);
+  const minutes = totalMin % 60;
+  if (hours > 48) return `${Math.floor(hours / 24)}d ${hours % 24}h`;
+  if (hours > 0) return `${hours}h ${minutes}min`;
+  return `${minutes}min`;
+}
+
+/**
+ * Carrega o histórico de chamados do solicitante
+ */
+async function loadCustomerHistory(ticket) {
+  const listEl = document.getElementById('customer-history-list');
+  if (!listEl) return;
+
+  const requesterId = ticket.users_id_recipient;
+  if (!requesterId || !window.electronAPI) {
+    listEl.innerHTML = '<span style="color: var(--text-muted); font-size: 12px;">Sem histórico disponível.</span>';
+    return;
+  }
+
+  try {
+    const allTickets = await window.electronAPI.glpiGetTickets(requesterId);
+    const recent = allTickets
+      .filter(t => t.id != ticket.id)
+      .sort((a, b) => parseInt(b.id) - parseInt(a.id))
+      .slice(0, 5);
+
+    if (recent.length === 0) {
+      listEl.innerHTML = '<span style="color: var(--text-muted); font-size: 12px;">Nenhum chamado anterior.</span>';
+      return;
+    }
+
+    const statusColors = {
+      1: '#ef4444', 2: '#f59e0b', 3: '#f59e0b',
+      4: '#f59e0b', 5: '#10b981', 6: '#64748b'
+    };
+
+    listEl.innerHTML = recent.map(t => {
+      const color = statusColors[parseInt(t.status)] || '#64748b';
+      return `
+        <div class="customer-history-item" onclick="viewTicketDetails(${t.id})" role="button" tabindex="0" title="#${t.id} — ${escapeHtml(t.name)}">
+          <span class="hist-id">#${t.id}</span>
+          <span class="hist-title">${escapeHtml(t.name)}</span>
+          <span class="hist-dot" style="background: ${color};"></span>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    listEl.innerHTML = '<span style="color: var(--text-muted); font-size: 12px;">Erro ao carregar histórico.</span>';
+  }
+}
+
+/**
+ * Admin: atualiza um campo do chamado ativo via GLPI API
+ */
+export async function updateTicketFieldFromAdmin(field, value) {
+  if (!State.activeTicketId || !window.electronAPI) return;
+
+  try {
+    const res = await window.electronAPI.glpiUpdateTicket(State.activeTicketId, { [field]: value });
+    if (res && res.error) {
+      alert(`Erro ao atualizar: ${res.error}`);
+    } else {
+      // Atualiza estado local
+      const ticket = State.ticketsList.find(t => t.id == State.activeTicketId);
+      if (ticket) {
+        ticket[field] = value;
+        updateTicketDetailsUI(ticket);
+      }
+      loadTickets();
+    }
+  } catch (e) {
+    alert(`Erro ao atualizar chamado: ${e.message}`);
+  }
+}
+
+/**
+ * Admin: fecha o chamado ativo
+ */
+export async function closeTicketFromAdmin() {
+  if (!State.activeTicketId || !window.electronAPI) return;
+
+  if (!confirm('Tem certeza que deseja fechar este chamado?')) return;
+
+  try {
+    const res = await window.electronAPI.glpiUpdateTicket(State.activeTicketId, { status: 6 });
+    if (res && res.error) {
+      alert(`Erro ao fechar chamado: ${res.error}`);
+    } else {
+      const ticket = State.ticketsList.find(t => t.id == State.activeTicketId);
+      if (ticket) {
+        ticket.status = 6;
+        updateTicketDetailsUI(ticket);
+      }
+      loadTickets();
+    }
+  } catch (e) {
+    alert(`Erro ao fechar chamado: ${e.message}`);
+  }
+}
+
+/**
+ * Modal de criação rápida — abre o modal
+ */
+export function openQuickAddModal() {
+  const modal = document.getElementById('quick-add-modal');
+  if (!modal) return;
+
+  // Popula categorias
+  const catSelect = document.getElementById('quick-category');
+  if (catSelect && State.categoriesList.length > 0) {
+    catSelect.innerHTML = '<option value="">Selecione uma categoria...</option>';
+    State.categoriesList.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat.id;
+      opt.textContent = cat.name;
+      catSelect.appendChild(opt);
+    });
+  }
+
+  // Reseta formulário e erro
+  const form = document.getElementById('quick-add-form');
+  if (form) form.reset();
+  const errEl = document.getElementById('quick-add-error');
+  if (errEl) errEl.style.display = 'none';
+
+  modal.style.display = 'flex';
+  document.getElementById('quick-title')?.focus();
+}
+
+/**
+ * Modal de criação rápida — fecha o modal
+ */
+export function closeQuickAddModal() {
+  const modal = document.getElementById('quick-add-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+/**
+ * Modal de criação rápida — submete o chamado
+ */
+export async function submitQuickAddTicket(event) {
+  event.preventDefault();
+
+  const title = document.getElementById('quick-title')?.value.trim();
+  const category = document.getElementById('quick-category')?.value;
+  const urgency = document.getElementById('quick-urgency')?.value || '3';
+  const description = document.getElementById('quick-desc')?.value.trim();
+  const submitBtn = document.getElementById('quick-add-submit-btn');
+  const errEl = document.getElementById('quick-add-error');
+
+  if (!title || !category || !description) return;
+
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Enviando...'; }
+  if (errEl) errEl.style.display = 'none';
+
+  try {
+    let success = false;
+    let ticketId = null;
+    let errMessage = '';
+
+    if (window.electronAPI) {
+      let loggedUser = null;
+      try {
+        const userInfo = await window.electronAPI.getOSUser();
+        loggedUser = await window.electronAPI.glpiFindUser(userInfo.username);
+      } catch (err) {}
+
+      const userId = loggedUser ? loggedUser.id : null;
+      const res = await window.electronAPI.glpiCreateTicket({
+        title,
+        description,
+        categoryId: category,
+        urgency,
+        userId
+      });
+
+      if (res && res.id) {
+        success = true;
+        ticketId = res.id;
+      } else if (res && res.error) {
+        errMessage = res.error;
+      }
+    }
+
+    if (success) {
+      closeQuickAddModal();
+      alert(`Chamado #${ticketId} criado com sucesso!`);
+      await loadTickets();
+      switchScreen('tickets-list');
+    } else {
+      if (errEl) {
+        errEl.textContent = `Erro ao criar chamado: ${errMessage || 'Erro desconhecido'}`;
+        errEl.style.display = 'block';
+      }
+    }
+  } catch (e) {
+    if (errEl) {
+      errEl.textContent = `Erro de conexão: ${e.message}`;
+      errEl.style.display = 'block';
+    }
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Abrir Chamado'; }
   }
 }
 

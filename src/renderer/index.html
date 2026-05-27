@@ -23,7 +23,7 @@
         <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
         Início
       </button>
-      <button class="nav-btn" onclick="switchScreen('new-ticket')">
+      <button class="nav-btn" onclick="openQuickAddModal()">
         <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
         Abrir Chamado
       </button>
@@ -43,6 +43,30 @@
       <button class="nav-btn" onclick="switchScreen('remote-access')">
         <svg viewBox="0 0 24 24"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7l-2 3v1h8v-1l-2-3h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/></svg>
         Suporte Remoto
+      </button>
+      <button class="nav-btn" onclick="switchScreen('assets')">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+        Inventário de Ativos
+      </button>
+      <button class="nav-btn" onclick="switchScreen('reports')">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5.04-6.71l-2.75 3.54-2.16-2.66c-.15-.2-.4-.32-.67-.32-.4 0-.74.23-.91.57l-1.49 2.49H5v2h5.5l1.54-2.57 2.59 3.24c.15.19.39.31.65.31.27 0 .51-.13.67-.32l2.59-3.24V19h2v-2.49z"/></svg>
+        Relatórios
+      </button>
+      <button class="nav-btn" onclick="switchScreen('billing')">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+        Faturamento
+      </button>
+      <button class="nav-btn" onclick="switchScreen('analytics')">
+        <svg viewBox="0 0 24 24"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg>
+        Análise
+      </button>
+      <button class="nav-btn" onclick="switchScreen('api')">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+        APIs
+      </button>
+      <button class="nav-btn" onclick="switchScreen('compliance')">
+        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.72-7 8.77V12H5V6.3l7-3.11v8.8z"/></svg>
+        Conformidade
       </button>
       <button class="nav-btn" onclick="switchScreen('settings')">
         <svg viewBox="0 0 24 24" width="18" height="18"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="currentColor"/></svg>
@@ -120,6 +144,35 @@
           </button>
         </div>
 
+        <!-- SLA Semaphore Panel (Sprint 1.0) -->
+        <div class="card">
+          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">🚨 Status SLA dos Chamados</h3>
+          <div id="sla-semaphore-container">
+            <div style="text-align: center; color: var(--text-muted); padding: 20px;">Carregando status SLA...</div>
+          </div>
+        </div>
+
+        <!-- Dashboard Filters (Sprint 1.0) -->
+        <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+          <select id="dashboard-filter-period" class="form-control" style="flex: 1; min-width: 150px; margin-bottom: 0;" onchange="applyDashboardFilters()">
+            <option value="all">Período: Todos</option>
+            <option value="today">Hoje</option>
+            <option value="week">Última Semana</option>
+            <option value="month">Último Mês</option>
+            <option value="quarter">Último Trimestre</option>
+          </select>
+          <select id="dashboard-filter-operator" class="form-control" style="flex: 1; min-width: 150px; margin-bottom: 0;" onchange="applyDashboardFilters()">
+            <option value="all">Operador: Todos</option>
+          </select>
+          <select id="dashboard-filter-customer" class="form-control" style="flex: 1; min-width: 150px; margin-bottom: 0;" onchange="applyDashboardFilters()">
+            <option value="all">Cliente: Todos</option>
+          </select>
+          <select id="dashboard-filter-category" class="form-control" style="flex: 1; min-width: 150px; margin-bottom: 0;" onchange="applyDashboardFilters()">
+            <option value="all">Categoria: Todas</option>
+          </select>
+          <button class="btn-secondary" style="padding: 10px 16px; font-size: 12px; white-space: nowrap;" onclick="resetDashboardFilters()">Limpar Filtros</button>
+        </div>
+
         <div class="graphs-row">
           <!-- Quick Status Card -->
           <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
@@ -141,6 +194,25 @@
               <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: var(--font-display); font-size: 16px; font-weight: 800;" id="memMiniText">--%</div>
             </div>
             <span style="font-size: 12px; font-weight: 500; color: var(--text-secondary);" id="memMiniDetail">Calculando métricas...</span>
+          </div>
+        </div>
+
+        <!-- Business Metrics Charts (Sprint 1.0) -->
+        <div class="graphs-row">
+          <!-- Tickets by Status Chart -->
+          <div class="card" style="display: flex; flex-direction: column;">
+            <h3 style="font-family: var(--font-display); font-size: 14px; font-weight: 700; margin-bottom: 16px;">Chamados por Status</h3>
+            <div style="position: relative; height: 250px;">
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Tickets by Origin Chart -->
+          <div class="card" style="display: flex; flex-direction: column;">
+            <h3 style="font-family: var(--font-display); font-size: 14px; font-weight: 700; margin-bottom: 16px;">Chamados por Origem</h3>
+            <div style="position: relative; height: 250px;">
+              <canvas id="originChart"></canvas>
+            </div>
           </div>
         </div>
 
@@ -316,54 +388,115 @@
       </section>
 
 
-      <!-- SCREEN: TICKET DETAIL & CHAT -->
+      <!-- SCREEN: TICKET DETAIL & CHAT (Sprint 0.5 — Split Layout 70/30) -->
       <section id="screen-ticket-detail" class="screen">
-        <button class="btn-secondary" style="margin-bottom: 20px;" onclick="switchScreen('tickets-list')">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="transform: rotate(180deg);"><path d="M5 13h11.86l-5.43 5.43 1.42 1.42L21.14 12l-8.29-8.29-1.42 1.42 5.43 5.43H5v2z"/></svg>
-          Voltar para a Lista
-        </button>
 
-        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
-          <!-- Detail panel -->
-          <div class="card" style="display: flex; flex-direction: column; gap: 18px; align-self: flex-start;">
-            <div style="border-bottom: 1px solid var(--border-glass); padding-bottom: 16px;">
-              <span id="detail-ticket-id" class="ticket-id" style="font-size: 24px;">#---</span>
-              <h3 id="detail-ticket-title" style="font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-top: 8px;">Carregando...</h3>
+        <!-- TopBar: Voltar + ID + Título + Badges -->
+        <div class="ticket-topbar">
+          <button class="btn-secondary" style="flex-shrink: 0;" onclick="switchScreen('tickets-list')">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="transform: rotate(180deg);"><path d="M5 13h11.86l-5.43 5.43 1.42 1.42L21.14 12l-8.29-8.29-1.42 1.42 5.43 5.43H5v2z"/></svg>
+            Voltar
+          </button>
+          <div class="ticket-header-info">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <span id="detail-ticket-id" class="ticket-id" style="font-size: 20px;">#---</span>
+              <div id="detail-ticket-status">--</div>
+              <div id="detail-ticket-priority">--</div>
             </div>
-            
-            <div>
-              <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Status</span>
-              <div id="detail-ticket-status" style="margin-top: 4px;">--</div>
-            </div>
+            <h3 id="detail-ticket-title" class="ticket-header-title">Carregando...</h3>
+          </div>
+          <button class="btn-secondary" style="font-size: 11px; padding: 6px 12px; gap: 4px; flex-shrink: 0;" onclick="generateChatMarkdownSummary()">
+            📄 Resumo MD
+          </button>
+        </div>
 
-            <div>
-              <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Categoria</span>
-              <div id="detail-ticket-category" style="font-weight: 500; font-size: 14px; margin-top: 4px;">--</div>
-            </div>
+        <!-- Split 70/30 Layout -->
+        <div class="ticket-split-layout">
 
-            <div>
-              <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Prioridade / Impacto</span>
-              <div id="detail-ticket-priority" style="margin-top: 4px;">--</div>
-            </div>
+          <!-- LEFT: Descrição + Chat (70%) -->
+          <div class="ticket-main-panel">
 
-            <div>
-              <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Data de Abertura</span>
-              <div id="detail-ticket-date" style="font-weight: 500; font-size: 14px; margin-top: 4px;">--</div>
-            </div>
-
-            <div style="border-top: 1px solid var(--border-glass); padding-top: 16px;">
-              <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Descrição</span>
+            <!-- Descrição do Chamado -->
+            <div class="card ticket-desc-card">
+              <div class="ticket-desc-header">
+                <span class="sidebar-label">Descrição do Chamado</span>
+                <span id="detail-ticket-date" style="font-size: 11px; color: var(--text-muted);">--</span>
+              </div>
               <p id="detail-ticket-desc" style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; margin-top: 8px; white-space: pre-wrap;">--</p>
             </div>
 
-            <!-- Controles Administrativos (Super-Admin / Técnico) -->
-            <div id="admin-controls-section" style="display: none; border-top: 1px solid var(--border-glass); padding-top: 16px; flex-direction: column; gap: 12px; margin-top: 10px;">
-              <span style="font-size: 11px; color: var(--accent-neon); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 4px;">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 15l-4-4 1.41-1.41L10 13.17l5.59-5.59L17 9l-7 7z"/></svg>
-                Controles de Chamado
-              </span>
-              
-              <!-- Tipo -->
+            <!-- Chat Window (preenche a altura restante) -->
+            <div class="chat-window">
+              <div class="chat-header">
+                <h3>Histórico de Interações</h3>
+                <span id="chat-unread-badge" class="chat-unread-counter" style="display: none;"></span>
+              </div>
+
+              <div class="timeline" id="chat-timeline">
+                <!-- Dynamically populated bubble followups -->
+              </div>
+
+              <form class="chat-footer" id="chat-form" onsubmit="submitFollowup(event)">
+                <div class="chat-input-wrapper">
+                  <div id="chat-file-indicator" style="display: none; padding: 6px 12px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass); font-size: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                    <span id="chat-file-name-text">arquivo.jpg</span>
+                    <button type="button" class="btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="removeChatFile()">Remover</button>
+                  </div>
+                  <div style="display: flex; align-items: center; width: 100%;">
+                    <button type="button" class="action-btn" style="width: 44px; height: 44px; border-radius: 10px 0 0 10px; border-right: none;" onclick="triggerChatFileInput()" title="Anexar arquivo">
+                      📎
+                    </button>
+                    <input type="text" id="chat-input-field" placeholder="Digite sua resposta para o técnico..." required autocomplete="off" style="border-radius: 0 10px 10px 0; height: 44px;">
+                    <input type="file" id="chat-file-input" style="display: none;" onchange="handleChatFileSelect(event)">
+                  </div>
+                </div>
+                <button type="submit" class="btn-primary" style="padding: 12px 20px; height: 44px;">Enviar</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- RIGHT: Sidebar de Metadados (30%) -->
+          <div class="ticket-sidebar-panel">
+
+            <!-- Categoria -->
+            <div class="sidebar-section">
+              <span class="sidebar-label">Categoria</span>
+              <div id="detail-ticket-category" style="font-weight: 500; font-size: 13.5px; margin-top: 4px; color: var(--text-primary);">--</div>
+            </div>
+
+            <!-- Solicitante -->
+            <div class="sidebar-section">
+              <span class="sidebar-label">Solicitante</span>
+              <div id="detail-ticket-requester" style="font-weight: 500; font-size: 13.5px; margin-top: 4px; color: var(--text-primary);">--</div>
+            </div>
+
+            <!-- Barra de Progresso -->
+            <div class="sidebar-section">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span class="sidebar-label">Progresso</span>
+                <span id="detail-progress-pct" style="font-size: 11px; font-weight: 700; color: var(--accent-neon);">0%</span>
+              </div>
+              <div class="progress-track">
+                <div id="detail-progress-fill" class="progress-fill"></div>
+              </div>
+              <input type="range" id="detail-progress-slider" class="progress-slider" min="0" max="100" value="0" oninput="handleProgressSliderChange(this.value)">
+            </div>
+
+            <!-- SLA Timer -->
+            <div class="sidebar-section">
+              <span class="sidebar-label">SLA / Prazo</span>
+              <div id="detail-sla-timer" class="sla-badge sla-neutral" style="margin-top: 6px; width: fit-content;">Sem prazo definido</div>
+            </div>
+
+            <!-- Controles Administrativos (Técnico / Super-Admin) -->
+            <div id="admin-controls-section" style="display: none; flex-direction: column; gap: 10px;">
+              <div class="sidebar-section" style="padding-bottom: 10px;">
+                <span style="font-size: 10px; color: var(--accent-neon); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 4px;">
+                  <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 15l-4-4 1.41-1.41L10 13.17l5.59-5.59L17 9l-7 7z"/></svg>
+                  Controles de Chamado
+                </span>
+              </div>
+
               <div class="form-group" style="margin-bottom: 0;">
                 <label for="admin-change-type" style="font-size: 10px; margin-bottom: 6px;">Tipo</label>
                 <select id="admin-change-type" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('type', this.value)">
@@ -372,7 +505,6 @@
                 </select>
               </div>
 
-              <!-- Categoria -->
               <div class="form-group" style="margin-bottom: 0;">
                 <label for="admin-change-category" style="font-size: 10px; margin-bottom: 6px;">Categoria</label>
                 <select id="admin-change-category" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('itilcategories_id', this.value)">
@@ -380,7 +512,6 @@
                 </select>
               </div>
 
-              <!-- Urgência -->
               <div class="form-group" style="margin-bottom: 0;">
                 <label for="admin-change-urgency" style="font-size: 10px; margin-bottom: 6px;">Urgência</label>
                 <select id="admin-change-urgency" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('urgency', this.value)">
@@ -392,7 +523,6 @@
                 </select>
               </div>
 
-              <!-- Localização -->
               <div class="form-group" style="margin-bottom: 0;">
                 <label for="admin-change-location" style="font-size: 10px; margin-bottom: 6px;">Localização</label>
                 <select id="admin-change-location" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('locations_id', this.value)">
@@ -400,7 +530,6 @@
                 </select>
               </div>
 
-              <!-- Alterar Status -->
               <div class="form-group" style="margin-bottom: 0;">
                 <label for="admin-change-status" style="font-size: 10px; margin-bottom: 6px;">Alterar Status</label>
                 <select id="admin-change-status" class="form-control" style="padding: 8px 12px; font-size: 13px;" onchange="updateTicketFieldFromAdmin('status', this.value)">
@@ -412,42 +541,21 @@
                 </select>
               </div>
 
-              <button class="btn-primary" id="btn-admin-close-ticket" style="background: linear-gradient(135deg, var(--danger), #b91c1c); color: white; width: 100%; justify-content: center; font-size: 12px; padding: 10px; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15); margin-top: 4px;" onclick="closeTicketFromAdmin()">
+              <button class="btn-primary" id="btn-admin-close-ticket" style="background: linear-gradient(135deg, var(--danger), #b91c1c); color: white; width: 100%; justify-content: center; font-size: 12px; padding: 10px; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);" onclick="closeTicketFromAdmin()">
                 Fechar Chamado
               </button>
+
+              <div style="border-bottom: 1px solid var(--border-glass); margin-top: 4px;"></div>
             </div>
 
-          </div>
-
-          <!-- Followup/Chat panel -->
-          <div class="chat-window">
-            <div class="chat-header">
-              <h3>Interações com o Suporte</h3>
-              <button class="btn-secondary" style="font-size: 11px; padding: 6px 12px; gap: 4px;" onclick="generateChatMarkdownSummary()">
-                📄 Copiar Sumário do Chat
-              </button>
-            </div>
-            
-            <div class="timeline" id="chat-timeline">
-              <!-- Dynamically populated bubble followups -->
-            </div>
-
-            <form class="chat-footer" id="chat-form" onsubmit="submitFollowup(event)">
-              <div class="chat-input-wrapper">
-                <div id="chat-file-indicator" style="display: none; padding: 6px 12px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass); font-size: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-                  <span id="chat-file-name-text">arquivo.jpg</span>
-                  <button type="button" class="btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="removeChatFile()">Remover</button>
-                </div>
-                <div style="display: flex; align-items: center; width: 100%;">
-                  <button type="button" class="action-btn" style="width: 44px; height: 44px; border-radius: 10px 0 0 10px; border-right: none;" onclick="triggerChatFileInput()" title="Anexar arquivo">
-                    📎
-                  </button>
-                  <input type="text" id="chat-input-field" placeholder="Digite sua resposta para o técnico..." required autocomplete="off" style="border-radius: 0 10px 10px 0; height: 44px;">
-                  <input type="file" id="chat-file-input" style="display: none;" onchange="handleChatFileSelect(event)">
-                </div>
+            <!-- Histórico do Solicitante -->
+            <div class="sidebar-section" style="border-bottom: none;">
+              <span class="sidebar-label">Histórico do Solicitante</span>
+              <div id="customer-history-list" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                <span style="color: var(--text-muted); font-size: 12px;">Carregando...</span>
               </div>
-              <button type="submit" class="btn-primary" style="padding: 12px 20px; height: 44px;">Enviar</button>
-            </form>
+            </div>
+
           </div>
         </div>
       </section>
@@ -535,6 +643,313 @@
               <span class="label">Número de Série da Placa-Mãe</span>
               <span class="value" id="tel-board-serial" style="font-family: monospace;">--</span>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN: ASSETS/INVENTORY (Sprint 1.2) -->
+      <section id="screen-assets" class="screen">
+        <div class="card">
+          <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 24px;">Inventário de Ativos</h2>
+
+          <div class="filter-bar" style="display: flex; gap: 16px; margin-bottom: 24px; align-items: center; background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border-glass); padding: 12px; border-radius: 12px; backdrop-filter: blur(8px);">
+            <div style="flex: 1; position: relative;">
+              <input type="text" id="search-assets-input" class="form-control" placeholder="Pesquisar por nome, modelo ou serial..." style="padding-left: 40px; margin-bottom: 0;" oninput="filterAssetsTable()">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/>
+              </svg>
+            </div>
+            <div>
+              <select id="filter-assets-type" class="form-control" style="width: 180px; margin-bottom: 0;" onchange="filterAssetsTable()">
+                <option value="all">Tipo: Todos</option>
+                <option value="computer">Computador</option>
+                <option value="monitor">Monitor</option>
+                <option value="printer">Impressora</option>
+                <option value="network">Rede</option>
+                <option value="peripheral">Periférico</option>
+              </select>
+            </div>
+            <div>
+              <select id="filter-assets-status" class="form-control" style="width: 180px; margin-bottom: 0;" onchange="filterAssetsTable()">
+                <option value="all">Status: Todos</option>
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+                <option value="deprecated">Descontinuado</option>
+              </select>
+            </div>
+            <button class="btn-secondary" style="padding: 10px 16px; font-size: 12px; white-space: nowrap;" onclick="resetAssetsFilters()">Limpar Filtros</button>
+          </div>
+
+          <table class="table-container">
+            <thead>
+              <tr>
+                <th style="width: 100px;">ID</th>
+                <th>Nome / Descrição</th>
+                <th style="width: 120px;">Tipo</th>
+                <th style="width: 140px;">Modelo</th>
+                <th style="width: 120px;">Serial</th>
+                <th style="width: 100px;">Status</th>
+                <th style="width: 60px;">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="assets-tbody">
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">Carregando inventário de ativos...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SCREEN: REPORTS (Sprint 2.0) -->
+      <section id="screen-reports" class="screen">
+        <div style="display: grid; grid-template-columns: 300px 1fr; gap: 24px;">
+
+          <!-- Reports Menu (Left Panel) -->
+          <div class="card" style="height: fit-content;">
+            <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">Tipos de Relatório</h3>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button class="btn-secondary" style="text-align: left; padding: 12px; background: rgba(0, 210, 147, 0.1); border: 1px solid rgba(0, 210, 147, 0.2); color: var(--accent-neon); font-weight: 600;" onclick="generateAndDisplayReport('tickets-by-status')">
+                📊 Chamados por Status
+              </button>
+              <button class="btn-secondary" style="text-align: left; padding: 12px;" onclick="generateAndDisplayReport('tickets-by-priority')">
+                🔴 Chamados por Prioridade
+              </button>
+              <button class="btn-secondary" style="text-align: left; padding: 12px;" onclick="generateAndDisplayReport('tickets-by-category')">
+                🏷️ Chamados por Categoria
+              </button>
+              <button class="btn-secondary" style="text-align: left; padding: 12px;" onclick="generateAndDisplayReport('sla-compliance')">
+                ✅ Conformidade com SLA
+              </button>
+              <button class="btn-secondary" style="text-align: left; padding: 12px;" onclick="generateAndDisplayReport('technician-performance')">
+                👤 Desempenho de Técnicos
+              </button>
+              <button class="btn-secondary" style="text-align: left; padding: 12px;" onclick="generateAndDisplayReport('resolution-time')">
+                ⏱️ Tempo de Resolução
+              </button>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-glass); margin-top: 16px; padding-top: 16px;">
+              <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 8px;">Período</label>
+              <select id="report-date-range" class="form-control">
+                <option value="today">Hoje</option>
+                <option value="week" selected>Última Semana</option>
+                <option value="month">Último Mês</option>
+                <option value="quarter">Último Trimestre</option>
+                <option value="all">Todo Período</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Reports Preview (Right Panel) -->
+          <div class="card">
+            <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">Visualização do Relatório</h3>
+            <div id="report-preview-container" style="min-height: 400px;">
+              <div style="text-align: center; color: var(--text-muted); padding: 60px 20px;">
+                <p style="font-size: 14px; margin-bottom: 12px;">👈 Selecione um tipo de relatório para começar</p>
+                <p style="font-size: 12px;">Os relatórios são gerados em tempo real baseado nos dados carregados.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN: BILLING (Sprint 4.0) -->
+      <section id="screen-billing" class="screen">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+          <!-- Invoices Card -->
+          <div class="card">
+            <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">📋 Faturas</h3>
+            <div id="invoices-list-container">
+              <p style="color: var(--text-muted); text-align: center;">Carregando faturas...</p>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 16px; border-top: 1px solid var(--border-glass); padding-top: 16px;">
+              <button class="btn-primary" style="flex: 1; padding: 10px; font-size: 12px;" onclick="generateNewInvoice()">➕ Nova Fatura</button>
+              <button class="btn-secondary" style="flex: 1; padding: 10px; font-size: 12px;" onclick="exportInvoices()">📥 Exportar</button>
+            </div>
+          </div>
+
+          <!-- Billing Stats Card -->
+          <div class="card">
+            <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">📊 Estatísticas</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <div style="background: rgba(0, 210, 147, 0.05); border: 1px solid rgba(0, 210, 147, 0.2); border-radius: 8px; padding: 12px;">
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Total em Aberto</div>
+                <div id="stat-pending-total" style="font-size: 18px; font-weight: 700; color: var(--accent-neon);">R$ 0,00</div>
+              </div>
+              <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 12px;">
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Total Pago</div>
+                <div id="stat-paid-total" style="font-size: 18px; font-weight: 700; color: var(--success);">R$ 0,00</div>
+              </div>
+              <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 12px;">
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Faturas Vencidas</div>
+                <div id="stat-overdue-count" style="font-size: 18px; font-weight: 700; color: var(--danger);">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Billing Plans Card -->
+        <div class="card">
+          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">💳 Planos de Preços</h3>
+          <div id="billing-plans-container">
+            <p style="color: var(--text-muted); text-align: center;">Carregando planos...</p>
+          </div>
+        </div>
+
+        <!-- Charge Rates Card -->
+        <div class="card">
+          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">💰 Tabela de Taxas</h3>
+          <div id="charge-rates-container">
+            <p style="color: var(--text-muted); text-align: center;">Carregando taxas...</p>
+          </div>
+        </div>
+
+        <!-- Payment Methods Card (Sprint 4.1) -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700;">💳 Métodos de Pagamento</h3>
+            <button class="btn-primary" style="padding: 8px 12px; font-size: 11px;" onclick="openAddPaymentMethodModal()">➕ Adicionar</button>
+          </div>
+          <div id="payment-methods-container">
+            <p style="color: var(--text-muted); text-align: center;">Carregando métodos...</p>
+          </div>
+        </div>
+
+        <!-- Subscriptions Card -->
+        <div class="card">
+          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">📅 Assinaturas Ativas</h3>
+          <div id="subscriptions-container">
+            <p style="color: var(--text-muted); text-align: center;">Carregando assinaturas...</p>
+          </div>
+        </div>
+
+        <!-- Payment History Card -->
+        <div class="card">
+          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">📝 Histórico de Pagamentos</h3>
+          <div id="payment-history-container">
+            <p style="color: var(--text-muted); text-align: center;">Carregando histórico...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN: ADVANCED ANALYTICS (Sprint 5.0) -->
+      <section id="screen-analytics" class="screen">
+        <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 24px;">📈 Análise Avançada e Inteligência Artificial</h2>
+
+        <!-- Intelligence Dashboard (Sprint 5.1) -->
+        <div id="intelligence-dashboard-container" style="margin-bottom: 24px;">
+          <p style="color: var(--text-muted); text-align: center; padding: 30px;">Carregando IA...</p>
+        </div>
+
+        <!-- Analytics Dashboard -->
+        <div id="analytics-dashboard-container">
+          <p style="color: var(--text-muted); text-align: center; padding: 30px;">Carregando dashboard...</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+          <!-- Custom Reports Card -->
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700;">📋 Relatórios Customizados</h3>
+              <button class="btn-primary" style="padding: 8px 12px; font-size: 11px;" onclick="openCreateReportModal()">➕ Novo</button>
+            </div>
+            <div id="custom-reports-container">
+              <p style="color: var(--text-muted); text-align: center;">Carregando relatórios...</p>
+            </div>
+          </div>
+
+          <!-- Report Schedules Card -->
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700;">⏰ Agendamentos</h3>
+              <button class="btn-primary" style="padding: 8px 12px; font-size: 11px;" onclick="openScheduleReportModal()">➕ Agendar</button>
+            </div>
+            <div id="report-schedules-container" style="font-size: 12px; color: var(--text-secondary);">
+              <p style="color: var(--text-muted); text-align: center;">Nenhum agendamento ativo.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN: API MANAGEMENT (Sprint 6.0) -->
+      <section id="screen-api" class="screen">
+        <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 24px;">🔌 Gerenciamento de APIs e Integrações</h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+          <!-- API Keys Card -->
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700;">🔑 Chaves de API</h3>
+              <button class="btn-primary" style="padding: 8px 12px; font-size: 11px;" onclick="openCreateAPIKeyModal()">➕ Nova</button>
+            </div>
+            <div id="api-keys-container">
+              <p style="color: var(--text-muted); text-align: center;">Carregando chaves...</p>
+            </div>
+          </div>
+
+          <!-- Webhooks Card -->
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700;">🔗 Webhooks</h3>
+              <button class="btn-primary" style="padding: 8px 12px; font-size: 11px;" onclick="openCreateWebhookModal()">➕ Novo</button>
+            </div>
+            <div id="webhooks-container">
+              <p style="color: var(--text-muted); text-align: center;">Carregando webhooks...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Integrations Card -->
+        <div class="card">
+          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">🧩 Integrações de Terceiros</h3>
+          <div id="integrations-container">
+            <p style="color: var(--text-muted); text-align: center;">Carregando integrações...</p>
+          </div>
+        </div>
+
+        <!-- API Logs Card -->
+        <div class="card" style="margin-top: 24px;">
+          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">📝 Logs de API</h3>
+          <div id="api-logs-container">
+            <p style="color: var(--text-muted); text-align: center;">Carregando logs...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN: COMPLIANCE AND AUDIT (Sprint 6.1) -->
+      <section id="screen-compliance" class="screen">
+        <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 24px;">🔒 Conformidade e Auditoria</h2>
+
+        <!-- Compliance Status Cards -->
+        <div id="compliance-status-container" style="margin-bottom: 24px;">
+          <p style="color: var(--text-muted); text-align: center; padding: 30px;">Carregando status...</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+          <!-- Security Events Card -->
+          <div class="card">
+            <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">⚠️ Eventos de Segurança</h3>
+            <div id="security-events-container">
+              <p style="color: var(--text-muted); text-align: center;">Carregando eventos...</p>
+            </div>
+          </div>
+
+          <!-- Data Retention Card -->
+          <div class="card">
+            <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">📅 Políticas de Retenção</h3>
+            <div id="data-retention-container">
+              <p style="color: var(--text-muted); text-align: center;">Carregando políticas...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Logs Card -->
+        <div class="card">
+          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;">📋 Logs de Auditoria</h3>
+          <div id="audit-logs-container">
+            <p style="color: var(--text-muted); text-align: center;">Carregando logs...</p>
           </div>
         </div>
       </section>
@@ -682,6 +1097,138 @@
           </form>
         </div>
 
+        <!-- SLA Configuration Card (Sprint 1.1) -->
+        <div class="card" style="max-width: 700px; margin: 24px auto 0 auto; display: flex; flex-direction: column; gap: 18px;">
+          <div style="border-bottom: 1px solid var(--border-glass); padding-bottom: 12px;">
+            <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="color: var(--accent-neon);"><path d="M11.99 5V1h-1v4H8.01V1H7v4H3.5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h17c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.5V1h-1v4h-3.01zM3.5 7H21v14H3.5V7z"/></svg>
+              Configuração de SLA (Sprint 1.1)
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Defina prazos de resolução por categoria e prioridade.</p>
+          </div>
+
+          <form id="sla-config-form" onsubmit="saveSLASettings(event)" style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+              <label for="sla-config-global" style="font-size: 13.5px; font-weight: 500; color: var(--text-primary);">SLA Global (em horas)</label>
+              <input type="number" id="sla-config-global" class="form-control" placeholder="24" min="1" step="1" value="24" required>
+              <span style="font-size: 11px; color: var(--text-muted);">Prazo padrão para todos os chamados (padrão: 24 horas)</span>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-glass); padding-top: 16px;">
+              <h4 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">SLA por Categoria</h4>
+              <table class="table-container" style="width: 100%; font-size: 13px;">
+                <thead>
+                  <tr>
+                    <th>Categoria</th>
+                    <th style="width: 120px;">Tempo (horas)</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="sla-config-category-tbody">
+                  <tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 12px;">Carregando categorias...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-glass); padding-top: 16px;">
+              <h4 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">SLA por Prioridade</h4>
+              <table class="table-container" style="width: 100%; font-size: 13px;">
+                <thead>
+                  <tr>
+                    <th>Prioridade</th>
+                    <th style="width: 120px;">Tempo (horas)</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="sla-config-priority-tbody">
+                  <tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 12px;">Carregando prioridades...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 10px; border-top: 1px solid var(--border-glass); padding-top: 20px;">
+              <button type="submit" class="btn-primary" style="padding: 12px 24px; font-size: 13.5px;">Salvar SLA</button>
+              <button type="button" class="btn-secondary" onclick="loadSLASettings()" style="padding: 12px 24px; font-size: 13.5px;">Recarregar Padrões</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Automation Rules Card (Sprint 2.1) -->
+        <div class="card" style="max-width: 700px; margin: 24px auto 0 auto; display: flex; flex-direction: column; gap: 18px;">
+          <div style="border-bottom: 1px solid var(--border-glass); padding-bottom: 12px;">
+            <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="color: var(--accent-cyan);"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-12c-3.31 0-6 2.69-6 6h2c0-2.21 1.79-4 4-4s4 1.79 4 4h2c0-3.31-2.69-6-6-6z"/></svg>
+              Regras de Automação (Sprint 2.1)
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Configure regras automáticas para otimizar o fluxo de trabalho.</p>
+          </div>
+
+          <div style="margin-bottom: 16px;">
+            <button type="button" class="btn-primary" style="padding: 10px 16px; font-size: 12px; margin-bottom: 12px;" onclick="openCreateRuleModal()">
+              ➕ Nova Regra
+            </button>
+          </div>
+
+          <div id="automation-rules-container">
+            <p style="color: var(--text-muted); text-align: center;">Carregando regras de automação...</p>
+          </div>
+        </div>
+
+        <!-- Multi-channel Chat Integration (Sprint 3.0) -->
+        <div class="card" style="max-width: 700px; margin: 24px auto 0 auto; display: flex; flex-direction: column; gap: 18px;">
+          <div style="border-bottom: 1px solid var(--border-glass); padding-bottom: 12px;">
+            <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="color: #00d293;"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V7h12v1z"/></svg>
+              Chat Multi-canal (Sprint 3.0)
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Integre WhatsApp, Teams e Slack para comunicação centralizada.</p>
+          </div>
+
+          <div>
+            <h4 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">Canais Disponíveis</h4>
+            <div id="multichannel-config-container">
+              <p style="color: var(--text-muted); text-align: center;">Carregando canais...</p>
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid var(--border-glass); padding-top: 16px;">
+            <h4 style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">Status de Conexão</h4>
+            <div id="channel-status-container">
+              <p style="color: var(--text-muted); text-align: center; font-size: 12px;">Nenhum canal ativo no momento</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Self-Service Portal (Sprint 3.1) -->
+        <div class="card" style="max-width: 700px; margin: 24px auto 0 auto; display: flex; flex-direction: column; gap: 18px;">
+          <div style="border-bottom: 1px solid var(--border-glass); padding-bottom: 12px;">
+            <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="color: var(--accent-neon);"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+              Portal de Auto-atendimento do Cliente (Sprint 3.1)
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Configure o portal para clientes gerenciarem seus próprios chamados.</p>
+          </div>
+
+          <div id="portal-setup-container">
+            <p style="color: var(--text-muted); text-align: center;">Carregando configurações do portal...</p>
+          </div>
+        </div>
+
+        <!-- Knowledge Base (Sprint 3.1) -->
+        <div class="card" style="max-width: 700px; margin: 24px auto 0 auto; display: flex; flex-direction: column; gap: 18px;">
+          <div style="border-bottom: 1px solid var(--border-glass); padding-bottom: 12px;">
+            <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="color: var(--accent-cyan);"><path d="M4 6h16V4H4c-1.1 0-2 .9-2 2v11H0v3h14v-3H4V6zm19-2h-6v5h6V4zm-1 4h-4V5h4v3z"/></svg>
+              Base de Conhecimento
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Gerencie artigos para ajudar clientes a encontrar respostas por conta própria.</p>
+          </div>
+
+          <div id="kb-container">
+            <p style="color: var(--text-muted); text-align: center;">Carregando artigos da base de conhecimento...</p>
+          </div>
+        </div>
+
         <!-- SCREEN: SETTINGS (ABOUT & UPDATES CARD) -->
         <div class="card" style="max-width: 700px; margin: 24px auto 0 auto; display: flex; flex-direction: column; gap: 18px;">
           <div style="border-bottom: 1px solid var(--border-glass); padding-bottom: 12px;">
@@ -716,6 +1263,61 @@
     </div>
 
   </main>
+
+  <!-- MODAL: QUICK ADD TICKET -->
+  <div id="quick-add-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-box" style="max-width: 500px;">
+      <h3>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="vertical-align: middle; margin-right: 6px; color: var(--accent-neon);"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        Novo Chamado Rápido
+      </h3>
+      <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; line-height: 1.5;">Preencha os dados essenciais. Para mais opções use o formulário completo.</p>
+
+      <form id="quick-add-form" onsubmit="submitQuickAddTicket(event)" style="display: flex; flex-direction: column; gap: 14px;">
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="quick-title" style="font-size: 13px; margin-bottom: 6px;">Assunto <span style="color: var(--danger);">*</span></label>
+          <input type="text" id="quick-title" class="form-control" placeholder="Descreva o problema brevemente..." required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="quick-category" style="font-size: 13px; margin-bottom: 6px;">Categoria <span style="color: var(--danger);">*</span></label>
+            <select id="quick-category" class="form-control" required>
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="quick-urgency" style="font-size: 13px; margin-bottom: 6px;">Urgência</label>
+            <select id="quick-urgency" class="form-control">
+              <option value="3">Média</option>
+              <option value="1">Muito Baixa</option>
+              <option value="2">Baixa</option>
+              <option value="4">Alta</option>
+              <option value="5">Muito Alta</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="quick-desc" style="font-size: 13px; margin-bottom: 6px;">Descrição <span style="color: var(--danger);">*</span></label>
+          <textarea id="quick-desc" class="form-control" rows="3" placeholder="Detalhes adicionais sobre o problema..." required style="resize: vertical; min-height: 80px;"></textarea>
+        </div>
+
+        <div id="quick-add-error" style="display: none; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #f87171;"></div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; flex-wrap: wrap; gap: 10px;">
+          <button type="button" class="btn-secondary" style="font-size: 12px;" onclick="closeQuickAddModal(); switchScreen('new-ticket')">
+            Formulário Completo →
+          </button>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn-secondary" onclick="closeQuickAddModal()">Cancelar</button>
+            <button type="submit" id="quick-add-submit-btn" class="btn-primary" style="min-width: 130px;">Abrir Chamado</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- MODAL: REMOTE ACCESS CHECKLIST -->
   <div id="remote-checklist-modal" class="modal-overlay" style="display: none;">

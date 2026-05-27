@@ -103,6 +103,68 @@ export function setupCharts() {
       }
     });
   }
+
+  // Sprint 1.0: Tickets by status donut chart
+  const canvasStatusChart = document.getElementById('statusChart');
+  if (canvasStatusChart) {
+    const ctxStatus = canvasStatusChart.getContext('2d');
+    if (State.statusChart) {
+      State.statusChart.destroy();
+    }
+    State.statusChart = new Chart(ctxStatus, {
+      type: 'doughnut',
+      data: {
+        labels: ['Novo', 'Em Atendimento', 'Pendente', 'Solucionado', 'Fechado'],
+        datasets: [{
+          data: [0, 0, 0, 0, 0],
+          backgroundColor: ['#ef4444', '#f59e0b', '#eab308', '#22c55e', '#6b7280'],
+          borderColor: 'transparent',
+          hoverBackgroundColor: ['#ef4444', '#f59e0b', '#eab308', '#22c55e', '#6b7280']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { padding: 12, font: { size: 11 }, color: tickColor }
+          }
+        }
+      }
+    });
+  }
+
+  // Sprint 1.0: Tickets by origin bar chart
+  const canvasOriginChart = document.getElementById('originChart');
+  if (canvasOriginChart) {
+    const ctxOrigin = canvasOriginChart.getContext('2d');
+    if (State.originChart) {
+      State.originChart.destroy();
+    }
+    State.originChart = new Chart(ctxOrigin, {
+      type: 'bar',
+      data: {
+        labels: ['Email', 'Portal', 'Chat', 'Telefone', 'Agente'],
+        datasets: [{
+          label: 'Quantidade',
+          data: [0, 0, 0, 0, 0],
+          backgroundColor: '#00d293',
+          borderColor: 'transparent',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { grid: { color: gridColor }, ticks: { color: tickColor } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
 }
 
 export function startTelemetryUpdates() {
@@ -233,7 +295,7 @@ export function renderFAQ() {
     card.setAttribute('tabindex', '0');
     card.setAttribute('role', 'button');
     card.setAttribute('aria-expanded', 'false');
-    
+
     card.innerHTML = `
       <div class="faq-card-header">
         <h4>${escapeHtml(faq.title)}</h4>
@@ -267,4 +329,187 @@ export function renderFAQ() {
 
     faqContainer.appendChild(card);
   });
+}
+
+export function updateDashboardCharts() {
+  if (!State.ticketsList || State.ticketsList.length === 0) return;
+
+  const filteredTickets = getFilteredDashboardTickets();
+
+  // Count tickets by status
+  const statusCounts = [0, 0, 0, 0, 0]; // new, in progress, pending, resolved, closed
+  const originCounts = [0, 0, 0, 0, 0]; // email, portal, chat, phone, agent
+
+  filteredTickets.forEach(t => {
+    const status = parseInt(t.status);
+    if (status === 1) statusCounts[0]++;
+    else if (status === 2 || status === 3) statusCounts[1]++;
+    else if (status === 4) statusCounts[2]++;
+    else if (status === 5) statusCounts[3]++;
+    else if (status === 6) statusCounts[4]++;
+
+    const origin = t.origin || 1;
+    if (origin >= 0 && origin <= 4) {
+      originCounts[origin]++;
+    }
+  });
+
+  // Update status chart
+  if (State.statusChart) {
+    State.statusChart.data.datasets[0].data = statusCounts;
+    State.statusChart.update();
+  }
+
+  // Update origin chart
+  if (State.originChart) {
+    State.originChart.data.datasets[0].data = originCounts;
+    State.originChart.update();
+  }
+}
+
+export function renderSLASemaphore() {
+  const container = document.getElementById('sla-semaphore-container');
+  if (!container) return;
+
+  const filteredTickets = getFilteredDashboardTickets();
+  const now = Date.now();
+  let warning = 0, critical = 0, paused = 0;
+
+  filteredTickets.forEach(t => {
+    if (parseInt(t.status) === 6 || parseInt(t.status) === 5) return;
+
+    const resolveTime = new Date(t.time_to_resolve).getTime();
+    const timeLeft = resolveTime - now;
+
+    if (parseInt(t.status) === 4) {
+      paused++;
+    } else if (timeLeft > 3600000) {
+      // More than 1 hour left
+    } else if (timeLeft > 0) {
+      warning++;
+    } else {
+      critical++;
+    }
+  });
+
+  const htmlSemaphore = `
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+      <div class="sla-badge sla-critical" style="text-align: center; padding: 12px; border-radius: 8px;">
+        <div style="font-size: 14px; font-weight: 700;">⚠️ Estourados</div>
+        <div style="font-size: 20px; font-weight: 800; margin-top: 6px;">${critical}</div>
+      </div>
+      <div class="sla-badge sla-warning" style="text-align: center; padding: 12px; border-radius: 8px;">
+        <div style="font-size: 14px; font-weight: 700;">⏱️ Críticos</div>
+        <div style="font-size: 20px; font-weight: 800; margin-top: 6px;">${warning}</div>
+      </div>
+      <div class="sla-badge sla-neutral" style="text-align: center; padding: 12px; border-radius: 8px;">
+        <div style="font-size: 14px; font-weight: 700;">⏸️ Pausados</div>
+        <div style="font-size: 20px; font-weight: 800; margin-top: 6px;">${paused}</div>
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = htmlSemaphore;
+}
+
+function getFilteredDashboardTickets() {
+  const periodFilter = document.getElementById('dashboard-filter-period')?.value || 'all';
+  const operatorFilter = document.getElementById('dashboard-filter-operator')?.value || 'all';
+  const customerFilter = document.getElementById('dashboard-filter-customer')?.value || 'all';
+  const categoryFilter = document.getElementById('dashboard-filter-category')?.value || 'all';
+
+  const now = Date.now();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return State.ticketsList.filter(t => {
+    // Period filter
+    if (periodFilter !== 'all') {
+      const ticketDate = new Date(t.date);
+      const daysDiff = Math.floor((now - ticketDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (periodFilter === 'today' && daysDiff > 0) return false;
+      if (periodFilter === 'week' && daysDiff > 7) return false;
+      if (periodFilter === 'month' && daysDiff > 30) return false;
+      if (periodFilter === 'quarter' && daysDiff > 90) return false;
+    }
+
+    // Operator filter
+    if (operatorFilter !== 'all' && t.technician_id && t.technician_id !== operatorFilter) return false;
+
+    // Customer filter
+    if (customerFilter !== 'all' && t.requester_id && t.requester_id !== customerFilter) return false;
+
+    // Category filter
+    if (categoryFilter !== 'all' && t.category_id && t.category_id !== categoryFilter) return false;
+
+    return true;
+  });
+}
+
+export function initializeDashboardFilters() {
+  const operatorSelect = document.getElementById('dashboard-filter-operator');
+  const customerSelect = document.getElementById('dashboard-filter-customer');
+  const categorySelect = document.getElementById('dashboard-filter-category');
+
+  if (operatorSelect) {
+    operatorSelect.innerHTML = '<option value="all">Operador: Todos</option>';
+    const operators = new Set();
+    State.ticketsList.forEach(t => {
+      if (t.technician_id && t.technician_name) {
+        operators.add(JSON.stringify({ id: t.technician_id, name: t.technician_name }));
+      }
+    });
+    operators.forEach(opStr => {
+      const op = JSON.parse(opStr);
+      const option = document.createElement('option');
+      option.value = op.id;
+      option.textContent = op.name;
+      operatorSelect.appendChild(option);
+    });
+  }
+
+  if (customerSelect) {
+    customerSelect.innerHTML = '<option value="all">Cliente: Todos</option>';
+    const customers = new Set();
+    State.ticketsList.forEach(t => {
+      if (t.requester_id && t.requester_name) {
+        customers.add(JSON.stringify({ id: t.requester_id, name: t.requester_name }));
+      }
+    });
+    customers.forEach(custStr => {
+      const cust = JSON.parse(custStr);
+      const option = document.createElement('option');
+      option.value = cust.id;
+      option.textContent = cust.name;
+      customerSelect.appendChild(option);
+    });
+  }
+
+  if (categorySelect) {
+    categorySelect.innerHTML = '<option value="all">Categoria: Todas</option>';
+    State.categoriesList.forEach(cat => {
+      const option = document.createElement('option');
+      option.value = cat.id;
+      option.textContent = cat.name;
+      categorySelect.appendChild(option);
+    });
+  }
+}
+
+export function applyDashboardFilters() {
+  updateDashboardCharts();
+  renderSLASemaphore();
+}
+
+export function resetDashboardFilters() {
+  const selects = [
+    document.getElementById('dashboard-filter-period'),
+    document.getElementById('dashboard-filter-operator'),
+    document.getElementById('dashboard-filter-customer'),
+    document.getElementById('dashboard-filter-category')
+  ];
+  selects.forEach(select => {
+    if (select) select.value = 'all';
+  });
+  applyDashboardFilters();
 }

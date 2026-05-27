@@ -1446,5 +1446,279 @@ body.light-theme .recurring-alert {
   padding: 0;
 }
 
+/* =====================================================
+   Sprint 0.5 — Ticket Detail Split Layout 70/30
+   ===================================================== */
+
+/* Fullscreen mode for ticket detail */
+.main-content.main-content--ticket-detail {
+  overflow: hidden;
+  padding: 0;
+}
+
+#screen-ticket-detail.active {
+  display: flex !important;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px 28px 0;
+  gap: 14px;
+  overflow: hidden;
+}
+
+/* TopBar */
+.ticket-topbar {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex-shrink: 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.ticket-header-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.ticket-header-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Split layout */
+.ticket-split-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 70fr 30fr;
+  gap: 18px;
+  min-height: 0;
+  padding-bottom: 20px;
+}
+
+/* Left panel */
+.ticket-main-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+
+.ticket-desc-card {
+  flex-shrink: 0;
+  padding: 14px 18px !important;
+}
+
+.ticket-desc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+#screen-ticket-detail .chat-window {
+  flex: 1;
+  height: auto !important;
+  min-height: 0;
+}
+
+/* Right sidebar panel */
+.ticket-sidebar-panel {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  padding: 0 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.sidebar-section {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.sidebar-section:last-child {
+  border-bottom: none;
+}
+
+.sidebar-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  display: block;
+}
+
+/* Progress bar */
+.progress-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent-neon), var(--accent-cyan));
+  border-radius: 99px;
+  transition: width 0.35s ease;
+  box-shadow: 0 0 8px var(--accent-neon-glow);
+}
+
+.progress-slider {
+  width: 100%;
+  margin-top: 10px;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 99px;
+  outline: none;
+  cursor: pointer;
+  display: none;
+}
+
+.progress-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-neon);
+  box-shadow: 0 0 6px var(--accent-neon-glow);
+  cursor: pointer;
+}
+
+/* SLA badge */
+.sla-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.sla-ok {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--success);
+}
+
+.sla-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: var(--warning);
+}
+
+.sla-critical {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--danger);
+  animation: pulse 1.5s infinite;
+}
+
+.sla-neutral {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+  color: var(--text-muted);
+}
+
+/* Customer history */
+.customer-history-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.customer-history-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.customer-history-item .hist-id {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  font-family: monospace;
+}
+
+.customer-history-item .hist-title {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.customer-history-item .hist-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Chat unread badge */
+.chat-unread-counter {
+  background: var(--danger);
+  color: white;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* Light theme overrides */
+body.light-theme .ticket-sidebar-panel {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .sidebar-section {
+  border-color: rgba(0, 0, 0, 0.07);
+}
+
+body.light-theme .progress-track {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .customer-history-item {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.07);
+}
+
+body.light-theme .customer-history-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme .sla-neutral {
+  background: rgba(0, 0, 0, 0.04);
+  color: #64748b;
+}
+
 
 
