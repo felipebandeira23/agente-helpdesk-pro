@@ -9,6 +9,7 @@ import { loadCategories, loadLocations, loadTickets, autoCategorizeTicketTitle, 
 import { viewTicketDetails, submitFollowup, triggerChatFileInput, handleChatFileSelect, removeChatFile, generateChatMarkdownSummary, updateTicketFieldFromAdmin, closeTicketFromAdmin, handleProgressSliderChange, openQuickAddModal, closeQuickAddModal, submitQuickAddTicket } from './chat.js';
 import { openRemoteChecklistModal, closeRemoteChecklistModal, confirmRemoteChecklist, evaluateRemoteChecklistProgress } from './mesh.js';
 import { loadAssets, renderAssetsTable, filterAssetsTable, resetAssetsFilters, viewAssetDetails } from './assets.js';
+import { generateReport, displayReportPreview, exportReportAsCSV, printReport } from './reports.js';
 import { loadAgentSettingsIntoForm, saveAgentSettings, testAllConnections, handleFontScaleChange, handleCompactModeChange, checkUpdatesSilently, checkUpdatesManually, startUpdateWorkflow, dismissUpdateBanner, closeChangelogModal, loadSLASettings, saveSLASettings, getSLATimeForTicket } from './settings.js';
 import { checkAndPromptLogin } from './auth.js';
 
@@ -498,3 +499,15 @@ window.forceInventorySync = async () => {
     }
   }
 };
+
+// Sprint 2.0: Reports and Automation global functions
+window.generateAndDisplayReport = function(reportType) {
+  const dateRange = document.getElementById('report-date-range')?.value || 'week';
+  const report = generateReport(reportType, dateRange);
+  if (report) {
+    displayReportPreview(report);
+  }
+};
+
+window.exportReportAsCSV = exportReportAsCSV;
+window.printReport = printReport;
