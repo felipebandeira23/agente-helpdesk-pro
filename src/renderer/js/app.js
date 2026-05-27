@@ -11,6 +11,7 @@ import { openRemoteChecklistModal, closeRemoteChecklistModal, confirmRemoteCheck
 import { loadAssets, renderAssetsTable, filterAssetsTable, resetAssetsFilters, viewAssetDetails } from './assets.js';
 import { generateReport, displayReportPreview, exportReportAsCSV, printReport } from './reports.js';
 import { loadAutomationRules, renderAutomationRules, toggleAutomationRule, deleteAutomationRule } from './automation.js';
+import { initializeChannels, renderChannelConfig, renderChannelStatus, toggleChannel } from './multichannel.js';
 import { loadAgentSettingsIntoForm, saveAgentSettings, testAllConnections, handleFontScaleChange, handleCompactModeChange, checkUpdatesSilently, checkUpdatesManually, startUpdateWorkflow, dismissUpdateBanner, closeChangelogModal, loadSLASettings, saveSLASettings, getSLATimeForTicket } from './settings.js';
 import { checkAndPromptLogin } from './auth.js';
 
@@ -102,11 +103,14 @@ function setupInitialUI() {
     setTimeout(checkUpdatesSilently, 4000);
   }
 
-  // Carrega configurações do GLPI, SLA e Automação
+  // Carrega configurações do GLPI, SLA, Automação e Multi-canal
   loadAgentSettingsIntoForm();
   loadSLASettings();
   loadAutomationRules();
   renderAutomationRules();
+  initializeChannels();
+  renderChannelConfig();
+  renderChannelStatus();
 }
 
 /**
@@ -530,4 +534,18 @@ window.deleteAutomationRule = function(ruleId) {
 
 window.openCreateRuleModal = function() {
   alert('Criação de novas regras virá em breve com UI aprimorada.');
+};
+
+// Sprint 3.0: Multichannel global functions
+window.toggleMultichannelChannel = function(channelId) {
+  const enabled = toggleChannel(channelId);
+  renderChannelConfig();
+  renderChannelStatus();
+  if (enabled) {
+    console.log(`[MULTICHANNEL] Canal ativado com sucesso`);
+  }
+};
+
+window.openChannelConfigModal = function(channelId) {
+  alert('Configuração de canais virá em breve com UI aprimorada.');
 };
