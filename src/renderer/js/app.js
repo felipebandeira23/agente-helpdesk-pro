@@ -18,6 +18,7 @@ import { initializeBilling, renderInvoicesList, renderBillingPlans, renderCharge
 import { initializePaymentMethods, initializeSubscriptions, initializePaymentHistory, renderPaymentMethods, renderSubscriptions, renderPaymentHistory, removePaymentMethod, setDefaultPaymentMethod, cancelSubscription } from './payment.js';
 import { initializeAnalytics, renderAnalyticsDashboard, renderCustomReports, getAnalyticsMetrics, deleteCustomReport } from './analytics.js';
 import { initializeIntelligence, renderIntelligenceDashboard, intelligentCategorize, analyzeSentiment, suggestResponses, predictBestTechnician, detectAnomalies } from './intelligence.js';
+import { initializeAPIManagement, renderAPIKeys, renderWebhooks, renderIntegrations, renderAPILogs, createAPIKey, revokeAPIKey, createWebhook, deleteWebhook, toggleWebhook, toggleIntegration, updateIntegrationConfig } from './api-management.js';
 import { checkAndPromptLogin } from './auth.js';
 
 // Inicializador Central
@@ -134,6 +135,11 @@ function setupInitialUI() {
   renderCustomReports();
   initializeIntelligence();
   renderIntelligenceDashboard();
+  initializeAPIManagement();
+  renderAPIKeys();
+  renderWebhooks();
+  renderIntegrations();
+  renderAPILogs();
 }
 
 /**
@@ -379,6 +385,14 @@ window.analyzeSentiment = analyzeSentiment;
 window.suggestResponses = suggestResponses;
 window.predictBestTechnician = predictBestTechnician;
 window.detectAnomalies = detectAnomalies;
+window.renderAPIKeys = renderAPIKeys;
+window.renderWebhooks = renderWebhooks;
+window.renderIntegrations = renderIntegrations;
+window.renderAPILogs = renderAPILogs;
+window.revokeAPIKey = revokeAPIKey;
+window.deleteWebhook = deleteWebhook;
+window.toggleWebhook = toggleWebhook;
+window.toggleIntegration = toggleIntegration;
 
 // Placeholder for charge rate editing
 window.editChargeRate = (key) => {
@@ -416,6 +430,27 @@ window.openScheduleReportModal = () => {
   if (frequency) {
     alert('Modal de agendamento de relatório - Implementação de UI completa pendente');
   }
+};
+
+// Placeholder for creating API key
+window.openCreateAPIKeyModal = () => {
+  const keyName = prompt('Nome da chave de API:', 'Nova Chave');
+  if (keyName) {
+    alert('Modal de criação de chave de API - Implementação de UI completa pendente');
+  }
+};
+
+// Placeholder for creating webhook
+window.openCreateWebhookModal = () => {
+  const webhookName = prompt('Nome do webhook:', 'Meu Webhook');
+  if (webhookName) {
+    alert('Modal de criação de webhook - Implementação de UI completa pendente');
+  }
+};
+
+// Placeholder for integration config
+window.openIntegrationConfig = (integrationId) => {
+  alert('Modal de configuração de integração - Implementação de UI completa pendente');
 };
 
 // Métricas de Telemetria triggers
