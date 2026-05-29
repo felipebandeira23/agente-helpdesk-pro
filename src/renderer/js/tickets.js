@@ -6,6 +6,78 @@ import { State } from './state.js';
 import { escapeHtml, switchScreen } from './dom.js';
 import { renderDashboardRecentTickets } from './dashboard.js';
 
+// Banco de templates de chamado pré-configurados
+const TICKET_TEMPLATES = {
+  impressora: {
+    title: 'Impressora não imprime / Fila travada',
+    urgency: '4',
+    catMatch: 'impressora',
+    description: `Descreva o problema com a impressora:\n\n- Nome/modelo da impressora: \n- Mensagem de erro exibida (se houver): \n- A fila de impressão está travada? (Sim/Não): \n- Último funcionamento normal (data aproximada): \n\nJá tentei:\n☐ Reiniciar a impressora\n☐ Cancelar trabalhos da fila`,
+  },
+  lentidao: {
+    title: 'Computador lento ou travando',
+    urgency: '3',
+    catMatch: 'lentidao',
+    description: `Descreva o problema de desempenho:\n\n- O computador trava ao abrir qual programa: \n- Há quanto tempo ocorre a lentidão: \n- O computador foi reiniciado recentemente? (Sim/Não): \n\nJá tentei:\n☐ Reiniciar o computador\n☐ Fechar programas não utilizados`,
+  },
+  internet: {
+    title: 'Sem acesso à Internet / Rede',
+    urgency: '4',
+    catMatch: 'rede',
+    description: `Descreva o problema de conectividade:\n\n- O Wi-Fi está conectado mas sem Internet? (Sim/Não): \n- O problema afeta apenas este computador ou outros também: \n- Mensagem de erro exibida (se houver): \n\nJá tentei:\n☐ Desligar e religar o roteador/switch\n☐ Desconectar e reconectar ao Wi-Fi`,
+  },
+  outlook: {
+    title: 'Problema com e-mail / Outlook',
+    urgency: '3',
+    catMatch: 'e-mail',
+    description: `Descreva o problema com o e-mail:\n\n- O Outlook não abre, trava ou exibe erro: \n- Não consigo enviar / receber e-mails: \n- Caixa de entrada não atualiza: \n- Mensagem de erro exibida (se houver): \n\nJá tentei:\n☐ Fechar e reabrir o Outlook\n☐ Reiniciar o computador`,
+  },
+  senha: {
+    title: 'Redefinição de senha / Conta bloqueada',
+    urgency: '5',
+    catMatch: 'acesso',
+    description: `Descreva o problema de acesso:\n\n- Qual sistema está inacessível (Windows, e-mail, sistema interno): \n- A conta foi bloqueada após tentativas incorretas? (Sim/Não): \n- Quando ocorreu o bloqueio (horário aproximado): \n\nNOTA: Por segurança, NÃO informe sua senha atual neste chamado.`,
+  },
+  software: {
+    title: 'Solicitação de instalação / atualização de software',
+    urgency: '1',
+    catMatch: 'software',
+    description: `Dados da solicitação de software:\n\n- Nome do software solicitado: \n- Versão desejada (se souber): \n- Motivo / finalidade de uso: \n- Prazo de necessidade: \n\nObservação: Instalações precisam de aprovação prévia conforme política de TI.`,
+  },
+};
+
+/**
+ * Aplica um template ao formulário de novo chamado
+ */
+export function applyTicketTemplate(templateKey) {
+  const tpl = TICKET_TEMPLATES[templateKey];
+  if (!tpl) return;
+
+  const titleEl = document.getElementById('ticket-title');
+  const urgencyEl = document.getElementById('ticket-urgency');
+  const contentEl = document.getElementById('ticket-content');
+
+  if (titleEl) titleEl.value = tpl.title;
+  if (urgencyEl) urgencyEl.value = tpl.urgency;
+  if (contentEl) contentEl.value = tpl.description;
+
+  // Seleciona a categoria correspondente
+  autoCategorizeTicketTitle(tpl.title);
+
+  // Marca botão ativo visualmente
+  document.querySelectorAll('.ticket-template-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.getAttribute('onclick')?.includes(templateKey)) {
+      btn.classList.add('active');
+    }
+  });
+
+  // Remove destaque após 3s
+  setTimeout(() => {
+    document.querySelectorAll('.ticket-template-btn').forEach(b => b.classList.remove('active'));
+  }, 3000);
+}
+
 let attachedFile = null;
 
 export function triggerFileInput() {

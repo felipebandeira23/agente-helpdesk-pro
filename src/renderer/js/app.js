@@ -3,12 +3,13 @@
  */
 
 import { State } from './state.js';
-import { switchScreen, applyFontScale, applyCompactMode } from './dom.js';
+import { switchScreen, applyFontScale, applyCompactMode, toggleTheme } from './dom.js';
 import { setupCharts, startTelemetryUpdates, renderDashboardRecentTickets, renderFAQ } from './dashboard.js';
-import { loadCategories, loadLocations, loadTickets, autoCategorizeTicketTitle, triggerRecurrenceCheck, submitTicket, triggerFileInput, handleFileSelect } from './tickets.js';
+import { loadCategories, loadLocations, loadTickets, autoCategorizeTicketTitle, triggerRecurrenceCheck, submitTicket, triggerFileInput, handleFileSelect, applyTicketTemplate } from './tickets.js';
 import { viewTicketDetails, submitFollowup, triggerChatFileInput, handleChatFileSelect, removeChatFile, generateChatMarkdownSummary } from './chat.js';
 import { openRemoteChecklistModal, closeRemoteChecklistModal, confirmRemoteChecklist, evaluateRemoteChecklistProgress } from './mesh.js';
 import { loadAgentSettingsIntoForm, saveAgentSettings, testAllConnections, handleFontScaleChange, handleCompactModeChange, checkUpdatesSilently, checkUpdatesManually, startUpdateWorkflow, dismissUpdateBanner, closeChangelogModal } from './settings.js';
+import { filterTicketsTable } from './tickets.js';
 import { checkAndPromptLogin } from './auth.js';
 
 // Inicializador Central
@@ -98,37 +99,32 @@ function setupInitialUI() {
 }
 
 /**
- * Verifica o status de conexão com o proxy local Perl
+ * Verifica o status de conexão com o servidor GLPI
  */
 async function checkProxyStatus() {
   const dot = document.getElementById('agent-status-dot');
   const text = document.getElementById('agent-status-text');
 
-  const proxyUrl = 'http://127.0.0.1:62354';
-  const supportApi = `${proxyUrl}/support`;
-
   try {
-    const res = await fetch(`${supportApi}/status`);
-    if (res.ok) {
-      if (dot) {
-        dot.className = 'status-dot online';
-      }
-      if (text) {
-        text.textContent = 'Proxy Local Conectado';
-      }
-      
-      // Carrega tabelas se vazias
+    if (!window.electronAPI) throw new Error('API indisponível');
+
+    const res = await window.electronAPI.glpiTestConnection();
+
+    if (res && res.ok) {
+      if (dot) dot.className = 'status-dot online';
+      if (text) text.textContent = 'GLPI Conectado';
+
       if (State.categoriesList.length === 0) {
         await loadCategories();
         await loadLocations();
       }
       await loadTickets();
     } else {
-      throw new Error('Proxy offline');
+      throw new Error(res?.message || 'Falha na conexão');
     }
   } catch (e) {
     if (dot) dot.className = 'status-dot offline';
-    if (text) text.textContent = 'Proxy Local Offline';
+    if (text) text.textContent = 'GLPI Offline';
     showTableOfflineWarning();
   }
 }
@@ -137,7 +133,7 @@ function showTableOfflineWarning() {
   const warningRow = `
     <tr>
       <td colspan="6" style="text-align: center; color: var(--danger); padding: 30px;">
-        Proxy local offline. Verifique se o serviço Perl GLPI está rodando na porta 62354.
+        Servidor GLPI offline ou inacessível. Verifique sua conexão com a intranet.
       </td>
     </tr>
   `;
@@ -160,13 +156,12 @@ function startSelfDiagnosticAssistant() {
 
     const startPing = Date.now();
     try {
-      // Latência simulada/real para o host GLPI (através de fetch rápido ao proxy)
-      const res = await fetch('http://127.0.0.1:62354/support/status', { method: 'HEAD' });
-      if (res.ok) {
-        pingLatency = Date.now() - startPing;
+      if (window.electronAPI) {
+        const res = await window.electronAPI.glpiTestConnection();
+        pingLatency = res.ok ? (Date.now() - startPing) : 999;
       }
     } catch(e) {
-      pingLatency = 999; // Falha na latência de rede
+      pingLatency = 999;
     }
 
     if (window.electronAPI) {
@@ -281,7 +276,13 @@ function setupKeyboardFocusOutline() {
 }
 
 // Vincula métodos importantes de chamadas DOM ao window para compatibilidade com index.html
-window.switchScreen = switchScreen;
+window.switchScreen = (screenName) => {
+  switchScreen(screenName);
+  // Carrega configurações ao navegar para a tela de settings
+  if (screenName === 'settings') {
+    loadAgentSettingsIntoForm();
+  }
+};
 window.viewTicketDetails = viewTicketDetails;
 window.submitTicket = submitTicket;
 window.triggerFileInput = triggerFileInput;
@@ -304,6 +305,9 @@ window.checkUpdatesManually = checkUpdatesManually;
 window.dismissUpdateBanner = dismissUpdateBanner;
 window.closeChangelogModal = closeChangelogModal;
 window.startUpdateWorkflow = startUpdateWorkflow;
+window.toggleTheme = toggleTheme;
+window.filterTicketsTable = filterTicketsTable;
+window.applyTicketTemplate = applyTicketTemplate;
 
 // Métricas de Telemetria triggers
 window.triggerTelemetryFetch = async () => {

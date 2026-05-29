@@ -202,11 +202,34 @@
       <!-- SCREEN: NEW TICKET -->
       <section id="screen-new-ticket" class="screen">
         <div class="card">
-          <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 24px;">Abertura de Chamado Técnico</h2>
-          
+          <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 8px;">Abertura de Chamado Técnico</h2>
+          <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">Use um template abaixo para pré-preencher os campos, ou preencha manualmente.</p>
+
+          <!-- Templates de Chamado -->
+          <div id="ticket-templates-row" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-glass);">
+            <button type="button" class="ticket-template-btn" onclick="applyTicketTemplate('impressora')" title="Problemas com impressora">
+              🖨️ Impressora
+            </button>
+            <button type="button" class="ticket-template-btn" onclick="applyTicketTemplate('lentidao')" title="Computador lento ou travando">
+              ⚡ Lentidão
+            </button>
+            <button type="button" class="ticket-template-btn" onclick="applyTicketTemplate('internet')" title="Sem acesso à Internet ou rede">
+              🌐 Sem Internet
+            </button>
+            <button type="button" class="ticket-template-btn" onclick="applyTicketTemplate('outlook')" title="Problemas com e-mail ou Outlook">
+              📧 E-mail/Outlook
+            </button>
+            <button type="button" class="ticket-template-btn" onclick="applyTicketTemplate('senha')" title="Redefinição de senha ou bloqueio de acesso">
+              🔑 Senha/Acesso
+            </button>
+            <button type="button" class="ticket-template-btn" onclick="applyTicketTemplate('software')" title="Instalação ou atualização de software">
+              💿 Instalação
+            </button>
+          </div>
+
           <form id="new-ticket-form" onsubmit="submitTicket(event)">
             <div class="form-grid">
-              
+
               <div class="form-group full-width">
                 <label for="ticket-title">Assunto / Título do Problema</label>
                 <input type="text" id="ticket-title" class="form-control" placeholder="Ex: Lentidão na inicialização do Windows ou Erro na impressora principal" required>

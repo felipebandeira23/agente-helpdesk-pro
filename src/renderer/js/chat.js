@@ -393,6 +393,76 @@ window.openAttachmentLink = async function(urlOrPath) {
 };
 
 /**
+ * Atualiza um campo do chamado pelo painel administrativo (técnicos / super-admin)
+ */
+window.updateTicketFieldFromAdmin = async function(field, value) {
+  if (!State.activeTicketId || !window.electronAPI) return;
+
+  try {
+    const res = await window.electronAPI.glpiUpdateTicket(State.activeTicketId, { [field]: value });
+    if (res && res.error) {
+      alert(`Falha ao atualizar campo "${field}": ${res.error}`);
+      return;
+    }
+
+    // Atualiza o objeto local para refletir a mudança sem recarregar toda a lista
+    const ticket = State.ticketsList.find(t => t.id == State.activeTicketId);
+    if (ticket) ticket[field] = value;
+
+    // Se mudou o status, atualiza a pill de status no detalhe
+    if (field === 'status') {
+      const statusEl = document.getElementById('detail-ticket-status');
+      if (statusEl) {
+        const statusMap = { 1: ['red','Novo'], 2: ['yellow','Em Atendimento'], 3: ['yellow','Em Atendimento'], 4: ['yellow','Pendente'], 5: ['green','Solucionado'], 6: ['black','Fechado'] };
+        const [dot, text] = statusMap[parseInt(value)] || ['black', 'Pendente'];
+        statusEl.innerHTML = `<div class="status-pill"><span class="status-pill-dot ${dot}"></span><span>${text}</span></div>`;
+      }
+    }
+  } catch (e) {
+    alert(`Erro de conexão ao atualizar chamado: ${e.message}`);
+  }
+};
+
+/**
+ * Fecha o chamado ativo pelo painel administrativo
+ */
+window.closeTicketFromAdmin = async function() {
+  if (!State.activeTicketId || !window.electronAPI) return;
+  if (!confirm('Tem certeza que deseja fechar este chamado?')) return;
+
+  try {
+    const res = await window.electronAPI.glpiUpdateTicket(State.activeTicketId, { status: 6 });
+    if (res && res.error) {
+      alert(`Falha ao fechar chamado: ${res.error}`);
+      return;
+    }
+
+    // Atualiza UI
+    const statusSelect = document.getElementById('admin-change-status');
+    if (statusSelect) statusSelect.value = '6';
+
+    const closeBtn = document.getElementById('btn-admin-close-ticket');
+    if (closeBtn) {
+      closeBtn.disabled = true;
+      closeBtn.textContent = 'Chamado Fechado';
+      closeBtn.style.opacity = '0.5';
+    }
+
+    const ticket = State.ticketsList.find(t => t.id == State.activeTicketId);
+    if (ticket) ticket.status = 6;
+
+    const statusEl = document.getElementById('detail-ticket-status');
+    if (statusEl) {
+      statusEl.innerHTML = `<div class="status-pill"><span class="status-pill-dot black"></span><span>Fechado</span></div>`;
+    }
+
+    alert(`Chamado #${State.activeTicketId} fechado com sucesso.`);
+  } catch (e) {
+    alert(`Erro de conexão ao fechar chamado: ${e.message}`);
+  }
+};
+
+/**
  * Compila a timeline em um lindo Markdown de Sumário para cópia de um clique
  */
 export function generateChatMarkdownSummary() {
