@@ -98,31 +98,41 @@ function setupInitialUI() {
   }
 }
 
+let _glpiConnected = false;
+
 /**
- * Verifica o status de conexão com o servidor GLPI
+ * Verifica o status de conexão com o servidor GLPI.
+ * Quando já conectado, usa loadTickets() como proxy da conectividade
+ * para evitar um roundtrip extra. A verificação completa (testConnection)
+ * é feita apenas ao iniciar ou ao recuperar de um estado offline.
  */
 async function checkProxyStatus() {
   const dot = document.getElementById('agent-status-dot');
   const text = document.getElementById('agent-status-text');
 
+  if (!window.electronAPI) {
+    if (dot) dot.className = 'status-dot offline';
+    if (text) text.textContent = 'GLPI Offline';
+    return;
+  }
+
   try {
-    if (!window.electronAPI) throw new Error('API indisponível');
-
-    const res = await window.electronAPI.glpiTestConnection();
-
-    if (res && res.ok) {
-      if (dot) dot.className = 'status-dot online';
-      if (text) text.textContent = 'GLPI Conectado';
-
-      if (State.categoriesList.length === 0) {
-        await loadCategories();
-        await loadLocations();
-      }
-      await loadTickets();
-    } else {
-      throw new Error(res?.message || 'Falha na conexão');
+    if (!_glpiConnected) {
+      const res = await window.electronAPI.glpiTestConnection();
+      if (!res?.ok) throw new Error(res?.message || 'Falha na conexão');
+      _glpiConnected = true;
     }
+
+    if (dot) dot.className = 'status-dot online';
+    if (text) text.textContent = 'GLPI Conectado';
+
+    if (State.categoriesList.length === 0) {
+      await loadCategories();
+      await loadLocations();
+    }
+    await loadTickets();
   } catch (e) {
+    _glpiConnected = false;
     if (dot) dot.className = 'status-dot offline';
     if (text) text.textContent = 'GLPI Offline';
     showTableOfflineWarning();
@@ -278,9 +288,11 @@ function setupKeyboardFocusOutline() {
 // Vincula métodos importantes de chamadas DOM ao window para compatibilidade com index.html
 window.switchScreen = (screenName) => {
   switchScreen(screenName);
-  // Carrega configurações ao navegar para a tela de settings
   if (screenName === 'settings') {
     loadAgentSettingsIntoForm();
+  }
+  if (screenName === 'telemetry') {
+    window.triggerTelemetryFetch?.();
   }
 };
 window.viewTicketDetails = viewTicketDetails;

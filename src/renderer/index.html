@@ -53,7 +53,7 @@
     <div class="sidebar-bottom">
       <div class="status-badge-container">
         <span id="agent-status-dot" class="status-dot loading"></span>
-        <span id="agent-status-text">Conectando proxy...</span>
+        <span id="agent-status-text">Conectando ao GLPI...</span>
       </div>
       <button id="btn-force-inventory-sync" class="btn-secondary" style="font-size: 11px; padding: 8px 12px; justify-content: center; gap: 6px;" onclick="forceInventorySync()">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;">
@@ -614,8 +614,8 @@
             <!-- Fake support terminal log viewer inside dashboard for premium vibe -->
             <div style="margin-top: 20px; font-family: monospace; font-size: 11px; background-color: #05070a; border: 1px solid var(--border-glass); border-radius: 8px; padding: 12px; color: #a6e22e; height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
               <div>[SYSTEM] Inicializando subsistema remoto...</div>
-              <div>[SECURE] Porta local de escuta ativa: 62354</div>
-              <div>[MESH] Conectado ao nó MeshCentral local</div>
+              <div>[SECURE] Canal TLS/WSS ativo: rdp.intranet.coppead.ufrj.br:4430</div>
+              <div>[MESH] Conectado ao servidor MeshCentral COPPEAD</div>
               <div style="color: #66d9ef;">[INFO] Aguardando sinal de requisição de usuário...</div>
               <div id="terminal-action-log" style="color: #f92672;"></div>
             </div>
