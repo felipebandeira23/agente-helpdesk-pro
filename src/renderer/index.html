@@ -53,7 +53,7 @@
     <div class="sidebar-bottom">
       <div class="status-badge-container">
         <span id="agent-status-dot" class="status-dot loading"></span>
-        <span id="agent-status-text">Conectando proxy...</span>
+        <span id="agent-status-text">Conectando ao GLPI...</span>
       </div>
       <button id="btn-force-inventory-sync" class="btn-secondary" style="font-size: 11px; padding: 8px 12px; justify-content: center; gap: 6px;" onclick="forceInventorySync()">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;">
@@ -202,11 +202,34 @@
       <!-- SCREEN: NEW TICKET -->
       <section id="screen-new-ticket" class="screen">
         <div class="card">
-          <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 24px;">Abertura de Chamado Técnico</h2>
-          
+          <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 8px;">Abertura de Chamado Técnico</h2>
+          <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">Use um template abaixo para pré-preencher os campos, ou preencha manualmente.</p>
+
+          <!-- Templates de Chamado -->
+          <div id="ticket-templates-row" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-glass);">
+            <button type="button" class="ticket-template-btn" onclick="applyTicketTemplate('impressora')" title="Problemas com impressora">
+              🖨️ Impressora
+            </button>
+            <button type="button" class="ticket-template-btn" onclick="applyTicketTemplate('lentidao')" title="Computador lento ou travando">
+              ⚡ Lentidão
+            </button>
+            <button type="button" class="ticket-template-btn" onclick="applyTicketTemplate('internet')" title="Sem acesso à Internet ou rede">
+              🌐 Sem Internet
+            </button>
+            <button type="button" class="ticket-template-btn" onclick="applyTicketTemplate('outlook')" title="Problemas com e-mail ou Outlook">
+              📧 E-mail/Outlook
+            </button>
+            <button type="button" class="ticket-template-btn" onclick="applyTicketTemplate('senha')" title="Redefinição de senha ou bloqueio de acesso">
+              🔑 Senha/Acesso
+            </button>
+            <button type="button" class="ticket-template-btn" onclick="applyTicketTemplate('software')" title="Instalação ou atualização de software">
+              💿 Instalação
+            </button>
+          </div>
+
           <form id="new-ticket-form" onsubmit="submitTicket(event)">
             <div class="form-grid">
-              
+
               <div class="form-group full-width">
                 <label for="ticket-title">Assunto / Título do Problema</label>
                 <input type="text" id="ticket-title" class="form-control" placeholder="Ex: Lentidão na inicialização do Windows ou Erro na impressora principal" required>
@@ -591,8 +614,8 @@
             <!-- Fake support terminal log viewer inside dashboard for premium vibe -->
             <div style="margin-top: 20px; font-family: monospace; font-size: 11px; background-color: #05070a; border: 1px solid var(--border-glass); border-radius: 8px; padding: 12px; color: #a6e22e; height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
               <div>[SYSTEM] Inicializando subsistema remoto...</div>
-              <div>[SECURE] Porta local de escuta ativa: 62354</div>
-              <div>[MESH] Conectado ao nó MeshCentral local</div>
+              <div>[SECURE] Canal TLS/WSS ativo: rdp.intranet.coppead.ufrj.br:4430</div>
+              <div>[MESH] Conectado ao servidor MeshCentral COPPEAD</div>
               <div style="color: #66d9ef;">[INFO] Aguardando sinal de requisição de usuário...</div>
               <div id="terminal-action-log" style="color: #f92672;"></div>
             </div>
@@ -645,6 +668,26 @@
                 <option value="stable">Canal Estável (Recomendado)</option>
                 <option value="beta">Canal Beta / Testes</option>
               </select>
+            </div>
+
+            <!-- HelpDesk Pro Backend (novo sistema NestJS) -->
+            <div style="border-top: 1px solid var(--border-glass); padding-top: 20px; margin-top: 4px; display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="color: var(--accent-neon);"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 16v-5H7l6-9v5h4l-6 9z"/></svg>
+                <span style="font-size: 12px; font-weight: 700; color: var(--accent-neon); text-transform: uppercase; letter-spacing: 0.06em;">HelpDesk Pro — Novo Backend (NestJS)</span>
+              </div>
+              <p style="font-size: 11.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 8px;">Integração com o novo sistema de chamados. Quando configurado, o agente se registra automaticamente no servidor ao iniciar.</p>
+            </div>
+
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+              <label for="settings-hdp-url" style="font-size: 13.5px; font-weight: 500; color: var(--text-primary);">URL do Servidor HelpDesk Pro</label>
+              <input type="url" id="settings-hdp-url" placeholder="https://helpdesk.intranet.coppead.ufrj.br" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 8px; color: var(--text-primary); font-size: 14px; outline: none; transition: var(--transition-smooth);">
+              <span style="font-size: 11px; color: var(--text-muted);">Opcional. Deixe em branco para continuar usando apenas o GLPI.</span>
+            </div>
+
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+              <label for="settings-hdp-api-key" style="font-size: 13.5px; font-weight: 500; color: var(--text-primary);">Chave de API (X-API-Key)</label>
+              <input type="password" id="settings-hdp-api-key" placeholder="Chave de acesso ao backend NestJS" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 8px; color: var(--text-primary); font-size: 14px; outline: none; transition: var(--transition-smooth); font-family: monospace;">
             </div>
 
             <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
@@ -857,6 +900,52 @@
           Continuar sem autenticação (modo limitado)
         </button>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PRÉ-VISUALIZAÇÃO DO CHAMADO (Confirmação antes do envio) -->
+  <div id="ticket-preview-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-box" style="max-width: 560px; max-height: 80vh; overflow-y: auto;">
+      <h3 style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="color: var(--accent-neon);"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+        Pré-visualização do Chamado
+      </h3>
+      <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 20px;">Confirme os dados antes de enviar ao suporte técnico:</p>
+
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div class="preview-field">
+          <span class="preview-label">Assunto</span>
+          <span class="preview-value" id="preview-title">--</span>
+        </div>
+        <div class="preview-field">
+          <span class="preview-label">Categoria</span>
+          <span class="preview-value" id="preview-category">--</span>
+        </div>
+        <div class="preview-field">
+          <span class="preview-label">Urgência</span>
+          <span class="preview-value" id="preview-urgency">--</span>
+        </div>
+        <div class="preview-field" style="align-items: flex-start;">
+          <span class="preview-label" style="padding-top: 2px;">Descrição</span>
+          <pre class="preview-value" id="preview-description" style="white-space: pre-wrap; font-family: var(--font-body); font-size: 13px; color: var(--text-secondary); max-height: 160px; overflow-y: auto; background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: 6px; padding: 10px; flex: 1;">--</pre>
+        </div>
+        <div id="preview-telemetry-row" class="preview-field" style="display: none;">
+          <span class="preview-label">Contexto Auto-Anexo</span>
+          <span class="preview-value" style="color: var(--accent-neon); font-size: 12px;">✅ Dados de hardware e diagnóstico serão incluídos automaticamente.</span>
+        </div>
+        <div id="preview-file-row" class="preview-field" style="display: none;">
+          <span class="preview-label">Arquivo Anexo</span>
+          <span class="preview-value" id="preview-file-name" style="font-size: 12px;">--</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; border-top: 1px solid var(--border-glass); padding-top: 16px;">
+        <button class="btn-secondary" onclick="closeTicketPreviewModal()">Editar</button>
+        <button class="btn-primary" id="btn-confirm-submit-ticket" onclick="confirmAndSubmitTicket()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          Confirmar e Enviar
+        </button>
+      </div>
     </div>
   </div>
 

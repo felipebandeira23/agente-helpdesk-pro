@@ -6,6 +6,78 @@ import { State } from './state.js';
 import { escapeHtml, switchScreen } from './dom.js';
 import { renderDashboardRecentTickets } from './dashboard.js';
 
+// Banco de templates de chamado pré-configurados
+const TICKET_TEMPLATES = {
+  impressora: {
+    title: 'Impressora não imprime / Fila travada',
+    urgency: '4',
+    catMatch: 'impressora',
+    description: `Descreva o problema com a impressora:\n\n- Nome/modelo da impressora: \n- Mensagem de erro exibida (se houver): \n- A fila de impressão está travada? (Sim/Não): \n- Último funcionamento normal (data aproximada): \n\nJá tentei:\n☐ Reiniciar a impressora\n☐ Cancelar trabalhos da fila`,
+  },
+  lentidao: {
+    title: 'Computador lento ou travando',
+    urgency: '3',
+    catMatch: 'lentidao',
+    description: `Descreva o problema de desempenho:\n\n- O computador trava ao abrir qual programa: \n- Há quanto tempo ocorre a lentidão: \n- O computador foi reiniciado recentemente? (Sim/Não): \n\nJá tentei:\n☐ Reiniciar o computador\n☐ Fechar programas não utilizados`,
+  },
+  internet: {
+    title: 'Sem acesso à Internet / Rede',
+    urgency: '4',
+    catMatch: 'rede',
+    description: `Descreva o problema de conectividade:\n\n- O Wi-Fi está conectado mas sem Internet? (Sim/Não): \n- O problema afeta apenas este computador ou outros também: \n- Mensagem de erro exibida (se houver): \n\nJá tentei:\n☐ Desligar e religar o roteador/switch\n☐ Desconectar e reconectar ao Wi-Fi`,
+  },
+  outlook: {
+    title: 'Problema com e-mail / Outlook',
+    urgency: '3',
+    catMatch: 'e-mail',
+    description: `Descreva o problema com o e-mail:\n\n- O Outlook não abre, trava ou exibe erro: \n- Não consigo enviar / receber e-mails: \n- Caixa de entrada não atualiza: \n- Mensagem de erro exibida (se houver): \n\nJá tentei:\n☐ Fechar e reabrir o Outlook\n☐ Reiniciar o computador`,
+  },
+  senha: {
+    title: 'Redefinição de senha / Conta bloqueada',
+    urgency: '5',
+    catMatch: 'acesso',
+    description: `Descreva o problema de acesso:\n\n- Qual sistema está inacessível (Windows, e-mail, sistema interno): \n- A conta foi bloqueada após tentativas incorretas? (Sim/Não): \n- Quando ocorreu o bloqueio (horário aproximado): \n\nNOTA: Por segurança, NÃO informe sua senha atual neste chamado.`,
+  },
+  software: {
+    title: 'Solicitação de instalação / atualização de software',
+    urgency: '1',
+    catMatch: 'software',
+    description: `Dados da solicitação de software:\n\n- Nome do software solicitado: \n- Versão desejada (se souber): \n- Motivo / finalidade de uso: \n- Prazo de necessidade: \n\nObservação: Instalações precisam de aprovação prévia conforme política de TI.`,
+  },
+};
+
+/**
+ * Aplica um template ao formulário de novo chamado
+ */
+export function applyTicketTemplate(templateKey) {
+  const tpl = TICKET_TEMPLATES[templateKey];
+  if (!tpl) return;
+
+  const titleEl = document.getElementById('ticket-title');
+  const urgencyEl = document.getElementById('ticket-urgency');
+  const contentEl = document.getElementById('ticket-content');
+
+  if (titleEl) titleEl.value = tpl.title;
+  if (urgencyEl) urgencyEl.value = tpl.urgency;
+  if (contentEl) contentEl.value = tpl.description;
+
+  // Seleciona a categoria correspondente
+  autoCategorizeTicketTitle(tpl.title);
+
+  // Marca botão ativo visualmente
+  document.querySelectorAll('.ticket-template-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.getAttribute('onclick')?.includes(templateKey)) {
+      btn.classList.add('active');
+    }
+  });
+
+  // Remove destaque após 3s
+  setTimeout(() => {
+    document.querySelectorAll('.ticket-template-btn').forEach(b => b.classList.remove('active'));
+  }, 3000);
+}
+
 let attachedFile = null;
 
 export function triggerFileInput() {
@@ -324,12 +396,62 @@ export function filterTicketsTable() {
   renderTicketsTable(filtered);
 }
 
+const URGENCY_LABELS = { '1': 'Baixa', '2': 'Baixa', '3': 'Média', '4': 'Alta', '5': 'Urgente/Crítica' };
+
 /**
- * Envia o chamado técnico
+ * Abre o modal de pré-visualização preenchido com os dados do formulário.
+ * Substituiu o envio direto — o usuário confirma antes de submeter.
  */
-export async function submitTicket(event) {
+export function submitTicket(event) {
   event.preventDefault();
-  
+
+  const title = document.getElementById('ticket-title').value.trim();
+  const category = document.getElementById('ticket-category');
+  const urgency = document.getElementById('ticket-urgency').value;
+  const content = document.getElementById('ticket-content').value.trim();
+  const attachContextChecked = document.getElementById('ticket-attach-telemetry')?.checked;
+
+  if (!title || !category?.value || !content) return;
+
+  const categoryText = category.options[category.selectedIndex]?.text || category.value;
+
+  // Preenche o modal de pré-visualização
+  const previewTitle = document.getElementById('preview-title');
+  const previewCategory = document.getElementById('preview-category');
+  const previewUrgency = document.getElementById('preview-urgency');
+  const previewDesc = document.getElementById('preview-description');
+  const previewTelRow = document.getElementById('preview-telemetry-row');
+  const previewFileRow = document.getElementById('preview-file-row');
+  const previewFileName = document.getElementById('preview-file-name');
+
+  if (previewTitle) previewTitle.textContent = title;
+  if (previewCategory) previewCategory.textContent = categoryText;
+  if (previewUrgency) previewUrgency.textContent = URGENCY_LABELS[urgency] || 'Média';
+  if (previewDesc) previewDesc.textContent = content;
+  if (previewTelRow) previewTelRow.style.display = attachContextChecked ? 'flex' : 'none';
+  if (previewFileRow && previewFileName) {
+    if (attachedFile) {
+      previewFileRow.style.display = 'flex';
+      previewFileName.textContent = `📎 ${attachedFile.name} (${Math.round(attachedFile.size / 1024)} KB)`;
+    } else {
+      previewFileRow.style.display = 'none';
+    }
+  }
+
+  const modal = document.getElementById('ticket-preview-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+// Expõe funções do modal de pré-visualização no escopo global
+window.closeTicketPreviewModal = function() {
+  const modal = document.getElementById('ticket-preview-modal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.confirmAndSubmitTicket = async function() {
+  const modal = document.getElementById('ticket-preview-modal');
+  if (modal) modal.style.display = 'none';
+
   const title = document.getElementById('ticket-title').value.trim();
   const category = document.getElementById('ticket-category').value;
   const urgency = document.getElementById('ticket-urgency').value;

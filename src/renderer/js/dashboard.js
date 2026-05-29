@@ -105,27 +105,31 @@ export function setupCharts() {
   }
 }
 
+// Cache da RAM total para evitar chamadas repetidas
+let _totalRamGb = null;
+
 export function startTelemetryUpdates() {
   if (State.telemetryInterval) {
     clearInterval(State.telemetryInterval);
   }
-  
+
   State.telemetryInterval = setInterval(async () => {
-    let currentCpu = Math.floor(Math.random() * 15) + 10; // 10% - 25% base
-    let currentMem = Math.floor(Math.random() * 5) + 52;  // 52% - 57% base
+    let currentCpu = 0;
+    let currentMem = 0;
 
     if (window.electronAPI) {
       try {
         const metrics = await window.electronAPI.getSystemMetrics();
-        // Se a telemetria em tempo real retornar métricas de uso de hardware estendidas
-        if (metrics.cpuUsage !== undefined) {
-          currentCpu = metrics.cpuUsage;
-        }
-        if (metrics.memUsage !== undefined) {
-          currentMem = metrics.memUsage;
+        if (metrics.cpuUsage !== undefined) currentCpu = metrics.cpuUsage;
+        if (metrics.memUsage !== undefined) currentMem = metrics.memUsage;
+
+        // Detecta RAM total real uma única vez
+        if (_totalRamGb === null && metrics.totalMem) {
+          const match = metrics.totalMem.toString().match(/[\d.]+/);
+          if (match) _totalRamGb = parseFloat(match[0]);
         }
       } catch (err) {
-        // Fallback para fluctuation
+        // sem dados disponíveis
       }
     }
 
@@ -139,11 +143,15 @@ export function startTelemetryUpdates() {
       State.memMiniChart.update();
       const elText = document.getElementById('memMiniText');
       if (elText) elText.textContent = `${currentMem}%`;
-      
+
       const elDetail = document.getElementById('memMiniDetail');
       if (elDetail) {
-        const usedGb = ((16 * currentMem) / 100).toFixed(1);
-        elDetail.textContent = `${usedGb} GB de 16.0 GB em uso`;
+        if (_totalRamGb && currentMem > 0) {
+          const usedGb = ((_totalRamGb * currentMem) / 100).toFixed(1);
+          elDetail.textContent = `${usedGb} GB de ${_totalRamGb.toFixed(1)} GB em uso`;
+        } else {
+          elDetail.textContent = currentMem > 0 ? `${currentMem}% em uso` : 'Calculando métricas...';
+        }
       }
     }
 

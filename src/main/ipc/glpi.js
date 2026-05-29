@@ -8,6 +8,14 @@ const { collectInventory } = require('../inventory-collector');
 const logger = require('../logger');
 const os = require('os');
 
+function isString(v, maxLen = 2048) {
+  return typeof v === 'string' && v.length > 0 && v.length <= maxLen;
+}
+
+function isSafeInt(v) {
+  return Number.isInteger(Number(v)) && Number(v) > 0;
+}
+
 function registerGlpiIPCHandlers() {
   const getMainWindow = () => {
     const windows = BrowserWindow.getAllWindows();
@@ -18,6 +26,7 @@ function registerGlpiIPCHandlers() {
   ipcMain.handle('glpi-get-config', () => glpiApi.getGlpiConfig());
 
   ipcMain.handle('glpi-set-config', async (event, cfg) => {
+    if (!cfg || typeof cfg !== 'object') return { ok: false, message: 'Configuração inválida.' };
     return glpiApi.setGlpiConfig(cfg);
   });
 
@@ -30,7 +39,10 @@ function registerGlpiIPCHandlers() {
   });
 
   // Autenticação LDAP com credenciais Windows
-  ipcMain.handle('glpi-login', async (event, { login, password }) => {
+  ipcMain.handle('glpi-login', async (event, { login, password } = {}) => {
+    if (!isString(login, 128) || !isString(password, 256)) {
+      return { ok: false, message: 'Credenciais inválidas.' };
+    }
     try {
       const result = await glpiApi.loginWithCredentials(login, password);
       logger.info(`[AUTH] Login LDAP bem-sucedido para: ${login}`, 'IPC-GLPI');
@@ -77,6 +89,7 @@ function registerGlpiIPCHandlers() {
 
   // Usuários & Perfis
   ipcMain.handle('glpi-find-user', async (event, login) => {
+    if (!isString(login, 128)) return null;
     try {
       return await glpiApi.findUserByLogin(login);
     } catch (e) {
@@ -111,6 +124,9 @@ function registerGlpiIPCHandlers() {
   });
 
   ipcMain.handle('glpi-create-ticket', async (event, opts) => {
+    if (!opts || typeof opts !== 'object') return { error: 'Dados do chamado inválidos.' };
+    if (!isString(opts.title, 512)) return { error: 'Título do chamado ausente ou inválido.' };
+    if (!isString(opts.description, 65536)) return { error: 'Descrição do chamado ausente ou inválida.' };
     try {
       const extra = {
         hostname: os.hostname(),
@@ -124,7 +140,8 @@ function registerGlpiIPCHandlers() {
     }
   });
 
-  ipcMain.handle('glpi-update-ticket-status', async (event, { ticketId, status }) => {
+  ipcMain.handle('glpi-update-ticket-status', async (event, { ticketId, status } = {}) => {
+    if (!isSafeInt(ticketId) || !isSafeInt(status)) return { error: 'Parâmetros inválidos.' };
     try {
       return await glpiApi.updateTicketStatus(ticketId, status);
     } catch (e) {
@@ -132,7 +149,8 @@ function registerGlpiIPCHandlers() {
     }
   });
 
-  ipcMain.handle('glpi-update-ticket', async (event, { ticketId, fields }) => {
+  ipcMain.handle('glpi-update-ticket', async (event, { ticketId, fields } = {}) => {
+    if (!isSafeInt(ticketId) || !fields || typeof fields !== 'object') return { error: 'Parâmetros inválidos.' };
     try {
       return await glpiApi.updateTicket(ticketId, fields);
     } catch (e) {
@@ -142,6 +160,7 @@ function registerGlpiIPCHandlers() {
 
   // Interações e Respostas (Followups)
   ipcMain.handle('glpi-get-followups', async (event, ticketId) => {
+    if (!isSafeInt(ticketId)) return [];
     try {
       return await glpiApi.getTicketFollowups(ticketId);
     } catch (e) {
@@ -149,7 +168,8 @@ function registerGlpiIPCHandlers() {
     }
   });
 
-  ipcMain.handle('glpi-add-followup', async (event, { ticketId, message }) => {
+  ipcMain.handle('glpi-add-followup', async (event, { ticketId, message } = {}) => {
+    if (!isSafeInt(ticketId) || !isString(message, 65536)) return { error: 'Parâmetros inválidos.' };
     try {
       return await glpiApi.addFollowup(ticketId, message);
     } catch (e) {
@@ -158,7 +178,8 @@ function registerGlpiIPCHandlers() {
   });
 
   // Anexos (Documentos)
-  ipcMain.handle('glpi-upload-document', async (event, { ticketId, fileName, buffer }) => {
+  ipcMain.handle('glpi-upload-document', async (event, { ticketId, fileName, buffer } = {}) => {
+    if (!isSafeInt(ticketId) || !isString(fileName, 256)) return { error: 'Parâmetros inválidos.' };
     try {
       return await glpiApi.uploadDocument(ticketId, fileName, buffer);
     } catch (e) {
@@ -168,6 +189,7 @@ function registerGlpiIPCHandlers() {
   });
 
   ipcMain.handle('glpi-get-documents', async (event, ticketId) => {
+    if (!isSafeInt(ticketId)) return [];
     try {
       return await glpiApi.getTicketDocuments(ticketId);
     } catch (e) {

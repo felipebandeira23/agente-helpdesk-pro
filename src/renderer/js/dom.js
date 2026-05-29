@@ -5,6 +5,22 @@
 import { State } from './state.js';
 
 /**
+ * Alterna entre tema claro e escuro
+ */
+export function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-theme');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+
+  const icon = document.getElementById('theme-icon');
+  if (!icon) return;
+  if (isLight) {
+    icon.innerHTML = '<path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM2 13h2M20 13h2M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M17.66 4.93l-1.41 1.41M4.93 17.66l-1.41 1.41"/>';
+  } else {
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  }
+}
+
+/**
  * Sanitiza strings para exibição HTML segura protegendo contra XSS
  */
 export function escapeHtml(str) {
