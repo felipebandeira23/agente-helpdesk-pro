@@ -89,6 +89,7 @@ function registerGlpiIPCHandlers() {
 
   // Usuários & Perfis
   ipcMain.handle('glpi-find-user', async (event, login) => {
+    if (!isString(login, 128)) return null;
     try {
       return await glpiApi.findUserByLogin(login);
     } catch (e) {
