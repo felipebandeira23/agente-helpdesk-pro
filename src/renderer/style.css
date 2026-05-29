@@ -1485,5 +1485,35 @@ body.light-theme .recurring-alert {
   background: rgba(138, 43, 226, 0.05);
 }
 
+/* ── Pré-visualização de Chamado (Modal de Confirmação) ── */
+.preview-field {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+}
+.preview-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  min-width: 100px;
+}
+.preview-value {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+}
+.light-theme .preview-field {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
 
 

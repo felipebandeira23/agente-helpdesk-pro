@@ -40,6 +40,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // GLPI — Usuário
   glpiFindUser:        (login) => ipcRenderer.invoke('glpi-find-user', login),
 
+  // HelpDesk Pro (novo backend NestJS)
+  hdpTestConnection:   () => ipcRenderer.invoke('hdp-test-connection'),
+  hdpRegisterComputer: () => ipcRenderer.invoke('hdp-register-computer'),
+  hdpCreateTicket:     (opts) => ipcRenderer.invoke('hdp-create-ticket', opts),
+
   // MeshCentral
   checkMeshAgent:      () => ipcRenderer.invoke('check-mesh-agent'),
   meshStart:           () => ipcRenderer.invoke('mesh-start'),

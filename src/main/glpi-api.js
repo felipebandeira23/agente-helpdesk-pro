@@ -196,6 +196,9 @@ function loadConfig() {
       }
       
       if (parsed.meshGroupId !== undefined) merged.meshGroupId = parsed.meshGroupId;
+      if (parsed.updateChannel !== undefined) merged.updateChannel = parsed.updateChannel;
+      if (parsed.helpdeskProUrl !== undefined) merged.helpdeskProUrl = parsed.helpdeskProUrl;
+      if (parsed.helpdeskProApiKey !== undefined) merged.helpdeskProApiKey = parsed.helpdeskProApiKey;
       if (parsed.sessionToken !== undefined) merged.sessionToken = parsed.sessionToken;
       if (parsed.sessionExpiry !== undefined) merged.sessionExpiry = parsed.sessionExpiry;
       
@@ -740,13 +743,16 @@ async function addFollowup(ticketId, message) {
 /**
  * Salva as configurações de conexão com o GLPI
  */
-function setGlpiConfig({ glpiUrl, appToken, userToken, meshUrl, meshGroupId }) {
+function setGlpiConfig({ glpiUrl, appToken, userToken, meshUrl, meshGroupId, updateChannel, helpdeskProUrl, helpdeskProApiKey }) {
   // Validar se as URLs fornecidas pertencem aos domínios autorizados pela política de segurança
   if (glpiUrl && !isDomainAllowed(glpiUrl)) {
     return { ok: false, message: 'URL do GLPI rejeitada pela política de segurança da rede COPPEAD.' };
   }
   if (meshUrl && !isDomainAllowed(meshUrl)) {
     return { ok: false, message: 'URL do MeshCentral rejeitada pela política de segurança da rede COPPEAD.' };
+  }
+  if (helpdeskProUrl && !isDomainAllowed(helpdeskProUrl)) {
+    return { ok: false, message: 'URL do HelpDesk Pro rejeitada pela política de segurança da rede COPPEAD.' };
   }
 
   _config = {
@@ -756,6 +762,9 @@ function setGlpiConfig({ glpiUrl, appToken, userToken, meshUrl, meshGroupId }) {
     userToken: userToken || _config.userToken,
     meshUrl: meshUrl ? meshUrl.replace(/\/$/, '') : _config.meshUrl,
     meshGroupId: meshGroupId !== undefined ? meshGroupId : _config.meshGroupId,
+    updateChannel: updateChannel || _config.updateChannel || 'stable',
+    helpdeskProUrl: helpdeskProUrl ? helpdeskProUrl.replace(/\/$/, '') : (_config.helpdeskProUrl || ''),
+    helpdeskProApiKey: helpdeskProApiKey !== undefined ? helpdeskProApiKey : (_config.helpdeskProApiKey || ''),
     sessionToken: null, // força novo login
     sessionExpiry: null,
   };
@@ -770,6 +779,9 @@ function getGlpiConfig() {
     userToken: _config.userToken,
     meshUrl: _config.meshUrl || 'https://rdp.intranet.coppead.ufrj.br',
     meshGroupId: _config.meshGroupId || '',
+    updateChannel: _config.updateChannel || 'stable',
+    helpdeskProUrl: _config.helpdeskProUrl || '',
+    helpdeskProApiKey: _config.helpdeskProApiKey || '',
     isConfigured: !!(
       _config.glpiUrl && _config.appToken && _config.userToken
     ),

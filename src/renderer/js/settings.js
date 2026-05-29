@@ -9,13 +9,15 @@ export async function loadAgentSettingsIntoForm() {
   if (!window.electronAPI) return;
   try {
     const cfg = await window.electronAPI.glpiGetConfig();
-    
+
     const urlEl = document.getElementById('settings-glpi-url');
     const appEl = document.getElementById('settings-glpi-app-token');
     const userEl = document.getElementById('settings-glpi-user-token');
     const meshUrlEl = document.getElementById('settings-mesh-url');
     const meshGroupEl = document.getElementById('settings-mesh-group');
     const channelEl = document.getElementById('settings-update-channel');
+    const hdpUrlEl = document.getElementById('settings-hdp-url');
+    const hdpKeyEl = document.getElementById('settings-hdp-api-key');
 
     if (urlEl) urlEl.value = cfg.glpiUrl || '';
     if (appEl) appEl.value = cfg.appToken || '';
@@ -23,6 +25,8 @@ export async function loadAgentSettingsIntoForm() {
     if (meshUrlEl) meshUrlEl.value = cfg.meshUrl || 'https://rdp.intranet.coppead.ufrj.br';
     if (meshGroupEl) meshGroupEl.value = cfg.meshGroupId || '';
     if (channelEl) channelEl.value = cfg.updateChannel || 'stable';
+    if (hdpUrlEl) hdpUrlEl.value = cfg.helpdeskProUrl || '';
+    if (hdpKeyEl) hdpKeyEl.value = cfg.helpdeskProApiKey || '';
 
     // Carrega preferências nos botões/checkboxes
     const fontScale = State.fontScale;
@@ -43,13 +47,15 @@ export async function loadAgentSettingsIntoForm() {
 
 export async function saveAgentSettings(event) {
   if (event) event.preventDefault();
-  
+
   const glpiUrl = document.getElementById('settings-glpi-url')?.value.trim();
   const appToken = document.getElementById('settings-glpi-app-token')?.value.trim();
   const userToken = document.getElementById('settings-glpi-user-token')?.value.trim();
   const meshUrl = document.getElementById('settings-mesh-url')?.value.trim() || document.getElementById('settings-mesh-url')?.placeholder;
   const meshGroupId = document.getElementById('settings-mesh-group')?.value.trim();
   const updateChannel = document.getElementById('settings-update-channel')?.value || 'stable';
+  const helpdeskProUrl = document.getElementById('settings-hdp-url')?.value.trim();
+  const helpdeskProApiKey = document.getElementById('settings-hdp-api-key')?.value.trim();
 
   if (!window.electronAPI) return;
 
@@ -60,7 +66,9 @@ export async function saveAgentSettings(event) {
       userToken,
       meshUrl,
       meshGroupId,
-      updateChannel
+      updateChannel,
+      helpdeskProUrl,
+      helpdeskProApiKey
     });
     
     if (res.ok) {
@@ -86,8 +94,8 @@ export async function testAllConnections() {
     try {
       // 1. Test GLPI URL connection
       const glpiRes = await window.electronAPI.glpiTestConnection();
-      const glpiMsg = glpiRes.ok 
-        ? '✅ Conexão GLPI: Bem-sucedida!' 
+      const glpiMsg = glpiRes.ok
+        ? '✅ Conexão GLPI: Bem-sucedida!'
         : `❌ Conexão GLPI: Falhou (${glpiRes.message})`;
 
       // 2. Test MeshCentral connection
@@ -98,7 +106,18 @@ export async function testAllConnections() {
         ? '✅ Conexão MeshCentral: Bem-sucedida!'
         : `❌ Conexão MeshCentral: Falhou (${meshRes.message})`;
 
-      alert(`${glpiMsg}\n\n${meshMsg}`);
+      // 3. Test HelpDesk Pro connection (only if URL is set)
+      const hdpUrlEl = document.getElementById('settings-hdp-url');
+      const hdpUrl = hdpUrlEl?.value.trim();
+      let hdpMsg = '';
+      if (hdpUrl) {
+        const hdpRes = await window.electronAPI.hdpTestConnection();
+        hdpMsg = hdpRes.ok
+          ? '\n\n✅ Conexão HelpDesk Pro: Bem-sucedida!'
+          : `\n\n❌ Conexão HelpDesk Pro: Falhou (${hdpRes.message})`;
+      }
+
+      alert(`${glpiMsg}\n\n${meshMsg}${hdpMsg}`);
     } catch (e) {
       alert(`Erro de teste: ${e.message}`);
     } finally {

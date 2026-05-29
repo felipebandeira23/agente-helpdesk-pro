@@ -396,12 +396,62 @@ export function filterTicketsTable() {
   renderTicketsTable(filtered);
 }
 
+const URGENCY_LABELS = { '1': 'Baixa', '2': 'Baixa', '3': 'Média', '4': 'Alta', '5': 'Urgente/Crítica' };
+
 /**
- * Envia o chamado técnico
+ * Abre o modal de pré-visualização preenchido com os dados do formulário.
+ * Substituiu o envio direto — o usuário confirma antes de submeter.
  */
-export async function submitTicket(event) {
+export function submitTicket(event) {
   event.preventDefault();
-  
+
+  const title = document.getElementById('ticket-title').value.trim();
+  const category = document.getElementById('ticket-category');
+  const urgency = document.getElementById('ticket-urgency').value;
+  const content = document.getElementById('ticket-content').value.trim();
+  const attachContextChecked = document.getElementById('ticket-attach-telemetry')?.checked;
+
+  if (!title || !category?.value || !content) return;
+
+  const categoryText = category.options[category.selectedIndex]?.text || category.value;
+
+  // Preenche o modal de pré-visualização
+  const previewTitle = document.getElementById('preview-title');
+  const previewCategory = document.getElementById('preview-category');
+  const previewUrgency = document.getElementById('preview-urgency');
+  const previewDesc = document.getElementById('preview-description');
+  const previewTelRow = document.getElementById('preview-telemetry-row');
+  const previewFileRow = document.getElementById('preview-file-row');
+  const previewFileName = document.getElementById('preview-file-name');
+
+  if (previewTitle) previewTitle.textContent = title;
+  if (previewCategory) previewCategory.textContent = categoryText;
+  if (previewUrgency) previewUrgency.textContent = URGENCY_LABELS[urgency] || 'Média';
+  if (previewDesc) previewDesc.textContent = content;
+  if (previewTelRow) previewTelRow.style.display = attachContextChecked ? 'flex' : 'none';
+  if (previewFileRow && previewFileName) {
+    if (attachedFile) {
+      previewFileRow.style.display = 'flex';
+      previewFileName.textContent = `📎 ${attachedFile.name} (${Math.round(attachedFile.size / 1024)} KB)`;
+    } else {
+      previewFileRow.style.display = 'none';
+    }
+  }
+
+  const modal = document.getElementById('ticket-preview-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+// Expõe funções do modal de pré-visualização no escopo global
+window.closeTicketPreviewModal = function() {
+  const modal = document.getElementById('ticket-preview-modal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.confirmAndSubmitTicket = async function() {
+  const modal = document.getElementById('ticket-preview-modal');
+  if (modal) modal.style.display = 'none';
+
   const title = document.getElementById('ticket-title').value.trim();
   const category = document.getElementById('ticket-category').value;
   const urgency = document.getElementById('ticket-urgency').value;

@@ -17,6 +17,8 @@ const { registerSystemIPCHandlers } = require('./main/ipc/system');
 const { registerGlpiIPCHandlers } = require('./main/ipc/glpi');
 const { registerMeshIPCHandlers } = require('./main/ipc/mesh');
 const { registerUpdatesIPCHandlers } = require('./main/ipc/updates');
+const { registerHelpdeskProIPCHandlers } = require('./main/ipc/helpdesk-pro');
+const hdpApi = require('./main/helpdesk-pro-api');
 
 let mainWindow;
 let tray = null;
@@ -96,6 +98,7 @@ if (!gotTheLock) {
     registerGlpiIPCHandlers();
     registerMeshIPCHandlers();
     registerUpdatesIPCHandlers();
+    registerHelpdeskProIPCHandlers();
 
     // Carrega a UI principal
     createWindow();
@@ -107,6 +110,14 @@ if (!gotTheLock) {
     // Inicia os temporizadores automatizados de inventário e notificações
     startInventoryScheduler();
     startNotificationScheduler();
+
+    // Registra este computador no novo backend HelpDesk Pro (falha silenciosa se não configurado)
+    setTimeout(async () => {
+      const result = await hdpApi.registerComputer({});
+      if (!result.ok && result.message && !result.message.includes('não configurada')) {
+        logger.warn(`Registro no HelpDesk Pro falhou: ${result.message}`, 'MAIN');
+      }
+    }, 15000);
 
     // Setup do Ícone da Bandeja do Sistema (Tray Icon)
     let iconPath = path.join(__dirname, 'assets/icon.ico');
